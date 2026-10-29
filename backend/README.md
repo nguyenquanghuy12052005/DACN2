@@ -132,7 +132,13 @@ npm test -- --runInBand
 npm run test:e2e -- --runInBand
 ```
 
-Lint uses --fix. E2E requires healthy PostgreSQL and the bootstrapped test database. Expected at this checkpoint: 8 unit tests, 9 E2E tests. CI is not yet configured.
+Lint uses --fix. E2E requires healthy PostgreSQL and the bootstrapped test database. Expected: 8 unit tests, 9 E2E tests.
+
+CI nằm trong một file [backend-ci.yml](../.github/workflows/backend-ci.yml): chạy khi push, mở/cập nhật PR hoặc chọn Run workflow. Nó cài dependencies, tạo PostgreSQL test riêng, áp dụng migrations/grants, rồi lint không sửa file → build → unit → E2E → chạy bản build và gọi health. Không cần .env hay secrets của máy bạn. DB/password CI chỉ dùng tạm cho job và được hủy cùng runner. Cách dùng service theo [GitHub Docs](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers).
+
+Để xem kết quả, sau khi commit/push file workflow, mở repository trên GitHub → **Actions → Backend CI → lượt chạy mới nhất**. Mọi bước phải xanh; khi đỏ, mở bước lỗi để xem log. Local PASS chưa đồng nghĩa GitHub Actions PASS.
+
+Log giữ console NestJS hiện có: `LOG` cho startup/DB connection, `ERROR` kèm context cho lỗi startup/DB. Không thêm log body, studentCode, password/token hay request log mới. Health smoke được CI tự gọi; start/stop local vẫn như trên.
 
 For a read-only lint check, use `npx --no-install eslint "{src,apps,libs,test}/**/*.ts"` instead of the fixing lint script.
 
@@ -146,4 +152,4 @@ Invoke-RestMethod http://127.0.0.1:3000/courses/1
 
 Expect HTTP 200, five seeded courses on a clean database, and course 1 with a readable Vietnamese name. E2E checks registration success, validation, duplicates, capacity races and rollback on `dacn2_test`; no POST smoke is needed on the demo database.
 
-Setup sạch đã kiểm chứng với volume PostgreSQL mới và bản sao backend trên máy hiện tại. Sau rút gọn: ESLint/build, 8 unit và 9 E2E PASS. Bằng chứng/giới hạn và trạng thái lab ở [checkpoint](../docs/PROGRESS.md). CI/K3s chưa có.
+Setup sạch đã kiểm chứng với volume PostgreSQL mới và bản sao backend trên máy hiện tại. Các bước bootstrap/lint/build/8 unit/9 E2E/compiled health smoke của CI cũng PASS khi thử local với DB tạm riêng; kết quả GitHub Actions chờ commit/push workflow. Bằng chứng/giới hạn ở [checkpoint](../docs/PROGRESS.md). K3s chưa có.

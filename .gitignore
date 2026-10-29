@@ -5,6 +5,15 @@
 !.env.*.example
 *.pem
 *.key
+*.keys
+*.keylog
+sslkeylog*
+
+# Raw network captures stay local; add sanitized fixtures explicitly if needed.
+*.pcap
+*.pcapng
+*.cap
+*.etl
 
 # Local OS/editor artifacts.
 Thumbs.db
@@ -15,3 +24,10 @@ Thumbs.db
 node_modules/
 dist/
 coverage/
+*.tsbuildinfo
+*.exe
+*.test
+/gateway/gateway
+
+# Local database backups; never commit database contents.
+/.local-backups/

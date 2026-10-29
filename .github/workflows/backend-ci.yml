@@ -1,0 +1,79 @@
+name: Backend CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_NAME: dacn2_test
+      DB_USER: dacn2_app
+      # Disposable CI credentials, never used by the local/demo database.
+      DB_PASSWORD: ci_only_app
+      PORT: '3300'
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: dacn2_admin
+          POSTGRES_DB: dacn2_test
+          POSTGRES_PASSWORD: ci_only_admin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dacn2_admin -d dacn2_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '20.20.2'
+          package-manager-cache: false
+      - name: Install dependencies
+        run: npm ci
+      - name: Prepare test database
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker exec -i "$POSTGRES_CONTAINER" psql -v ON_ERROR_STOP=1 -v app_password="$DB_PASSWORD" -U dacn2_admin -d dacn2_test <<'SQL'
+          CREATE ROLE dacn2_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD :'app_password';
+          SQL
+          for migration in database/migrations/*.sql; do
+            docker exec -i "$POSTGRES_CONTAINER" psql -v ON_ERROR_STOP=1 -U dacn2_admin -d dacn2_test < "$migration"
+          done
+          docker exec -i "$POSTGRES_CONTAINER" psql -v ON_ERROR_STOP=1 -U dacn2_admin -d dacn2_test < test/fixtures/grants.sql
+      - name: Lint (no file changes)
+        run: npx --no-install eslint "src/**/*.ts" "test/**/*.ts"
+      - name: Build
+        run: npm run build
+      - name: Unit tests
+        run: npm test -- --runInBand
+      - name: E2E tests
+        run: npm run test:e2e -- --runInBand
+      - name: Compiled backend health smoke
+        run: |
+          smoke_log=$(mktemp)
+          node dist/main.js > "$smoke_log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          if ! curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 --max-time 3 "http://127.0.0.1:$PORT/health"; then
+            cat "$smoke_log"
+            exit 1
+          fi
+          kill -0 "$server_pid"
