@@ -5,7 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Pool, QueryResult, QueryResultRow } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
@@ -49,5 +49,28 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleDestroy(): Promise<void> {
     await this.pool.end();
+  }
+
+  async transaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
+    const client = await this.pool.connect();
+    let discard = false;
+    try {
+      await client.query('BEGIN');
+      await client.query("SET LOCAL lock_timeout = '3s'");
+      await client.query("SET LOCAL statement_timeout = '5s'");
+      const result = await work(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        discard = true;
+        this.logger.error('PostgreSQL rollback failed; discarding connection');
+      }
+      throw error;
+    } finally {
+      client.release(discard);
+    }
   }
 }
