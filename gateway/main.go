@@ -7,7 +7,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 )
@@ -29,12 +28,14 @@ func main() {
 		tlsKeyLog = keyFile
 		log.Print("TLS key logging enabled for local lab")
 	}
-	target, err := url.Parse("http://127.0.0.1:3000")
+	config, err := readGatewayConfig(os.Getenv)
 	if err != nil {
 		log.Fatal(err)
 	}
+	target := config.upstream
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DialContext = (&net.Dialer{Timeout: 3 * time.Second, KeepAlive: 30 * time.Second}).DialContext
 	transport.ResponseHeaderTimeout = 5 * time.Second
 	requestLog := log.New(os.Stdout, "", 0)
 	telemetry, err := newGatewayTelemetry(target, transport, func(event gatewayRequestEvent) {
@@ -50,7 +51,7 @@ func main() {
 	}
 
 	server := &http.Server{
-		Addr:              "127.0.0.1:8443",
+		Addr:              config.listen,
 		Handler:           telemetry,
 		ConnContext:       gatewayConnContext,
 		ReadHeaderTimeout: 5 * time.Second,

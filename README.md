@@ -1,6 +1,6 @@
 # DACN2 — L7 cyber-defense lab
 
-Status (2026-10-30): M1 Gateway work in progress; local database moved to Windows PostgreSQL. Environment survey (M0-01), local backend (M0-03), and clean local setup verification (M0-02b) are complete. M0-04 CI/log/smoke is implemented and locally verified; hosted Actions evidence is pending. Academic acceptance questions (M0-02a) remain; see [current work](tasks/current.md).
+Status (2026-10-30): **M1 complete in the controlled local lab scope.** HTTPS/H2 Gateway → one K3s backend Pod → Windows PostgreSQL, test-DB writes/races/recovery and one-Pod read benchmark verified. C_work319req/s for the recorded500m/192Mi read profile, with20%headroom; saturation not reached at400RPS. M2 feature/window collector/dataset remains next. HostedCI and academic acceptance questions remain; see [current work](tasks/current.md).
 
 The planned system uses a Go HTTPS Gateway, Python/FastAPI ML control plane, and NestJS/PostgreSQL backend on K3s. It distinguishes Normal, Flash Crowd, Pure L7 DDoS, and Mixed Traffic; applies per-client mitigation; and scales backend Pods from measured admitted RPS. Prometheus/Grafana expose actual behavior.
 
@@ -15,13 +15,24 @@ Primary lab journey: start the controlled backend/Gateway, run legitimate traffi
 
 ## Actual evidence
 
+M1 Pod demo commands from `D:\DACN2` (project tools/private kubeconfig and existing
+WindowsPG required): `node scripts/backend-lab.cjs verify` deploys/checks then stops;
+`node scripts/backend-lab.cjs start` leaves lab running explicitly; `stop` stops it.
+The retained lab has one backendPod and loopbackNodePort13000. Gateway can target
+it with `DACN2_UPSTREAM_URL=http://127.0.0.1:13000`; optional
+`DACN2_LISTEN_ADDR=127.0.0.1:18443` keeps a separate smoke instance. Defaults remain
+native3000/8443; only explicit HTTP loopback origins/listeners accepted. Full
+procedures/results are in [DEPLOYMENT](docs/DEPLOYMENT.md). Startup initContainer
+waits for DB DNS to avoid cold-cluster EAI_AGAIN; apphealth does not continuously
+check DB. This is a lab workload, not public/authenticated production service.
+
 - The [backend](backend/README.md) implements health, course list/detail, and concurrency-safe course registration using PostgreSQL transactions. API behavior is documented in the [API contract](docs/API_CONTRACT.md).
 - Latest recorded backend checks: ESLint/build PASS, 8 unit tests and 9 E2E tests PASS. These are local results, not CI or deployment evidence.
 - [Backend CI](.github/workflows/backend-ci.yml) runs install, isolated PostgreSQL setup, lint/build/unit/E2E and compiled health smoke. Open GitHub → Actions → Backend CI after pushing the workflow; no hosted CI result is claimed yet.
 - Clean setup verified on 2026-10-29 using an isolated PostgreSQL volume and a clean backend source copy with `npm ci`: role/password, migrations, tests and compiled-backend health/list/detail all passed. This verifies setup on the existing Windows/Docker host, not prerequisite installation on another machine.
 - Local PostgreSQL 17 now runs directly on Windows at 127.0.0.1:5432; the backend binds to 127.0.0.1:3000. Docker's former database on 15432 is stopped and retained for recovery. Migration evidence is in [checkpoint](docs/PROGRESS.md).
 - Report.pdf is present; its contents were not independently reconciled during this Markdown review.
-- HTTPS Go Gateway, four JA4 variants, bounded H2/HPACK/Akamai extraction and local request telemetry/health are implemented. Independent Postman JA4 and same-session Chrome H2/hash comparisons have evidence. Dataset/model, inference, K3s, scaling and monitoring remain. Model training is planned on Google Colab. k3d/K3s is not installed; full-lab resource feasibility remains unverified.
+- HTTPS Go Gateway, four JA4 variants, bounded H2/HPACK/Akamai extraction and request telemetry verified with fixtures/independent captures. k3d/K3s and backendDeployment/Service are installed and retained stopped. Actual Pod DB and Gateway paths, scoped testDBwrites/concurrency/recovery and bounded benchmark have evidence. Dataset/model/inference/autoscaling/monitoring remain; training planned on Colab, full-lab resource feasibility unverified.
 
 ## Run the local backend
 

@@ -1,5 +1,41 @@
 # Gateway feature specification
 
+## M1-06 — controlled one-Pod capacity measurement
+
+Pre-measurement contract (2026-10-30): selected by user after M1-05h. Only local
+owned lab GET `/courses` on HTTP127.0.0.1:13000 and HTTPS127.0.0.1:18443; one
+backendPod500m/192Mi, WindowsPG with5courses, unchanged data, HTTP/1.1 keepalive.
+No DDoS/client attribution, training data collection, public targets or DB writes.
+
+Hard bounds: rates10/25/50/100/200/400req/s,≤32inflight, response64KiB,
+request timeout1s,≤180s generating requests, overall10min including setup/cleanup.
+GeneratorRSS≤256MiB; stop on hostfree<1GiB, backendrestart/OOM or errorburst>5%.
+Ctrl+C stops request generation/own Gateway/cluster; preserve unrelated services.
+Preflight validates one Ready backendPod, image/resources/loopback cluster owner.
+
+Use open-loop scheduled slots with no unbounded queue. Record scheduled, dispatched,
+completed, success/error, concurrency-shed, late-shed, scheduler lag and actual
+drain duration; do not hide unserved slots or report desiredRPS as achievedRPS.
+Latency measured monotonically at dispatch through body completion (not scheduled
+arrival); unserved slots are reported separately to expose omission under load.
+Each target warmup2s, discovery tiers5s, then two15s validation repeats at its
+highest passing tier. On a failing validation, report C unavailable rather than
+loosening conditions. Stop higher tiers once a discovery tier fails the condition.
+
+Project capacity condition: p95≤80ms, HTTP/transport error≤1%, successful slots≥95%,
+no generator-late shedding. This adopts80ms as a local experimental threshold,
+not a claim the Report specified this exact percentile or an achieved production
+SLO. Record p50/p95/p99 and all unmet targets; no tuning thresholds after results.
+
+For each target, highest passing offered tier is a validated working point, not
+maximum sustainable capacity. C is floor(0.8×minimum achieved goodput over both
+validation repeats and both targets);20%headroom is an explicit project scaling
+choice, not a measurement. If400passes, mark saturation not reached. Repeat values
+show noise; Gateway/direct differences include TLS/proxy and run-order/system
+effects, not an isolated causal overhead claim. Record generatorCPU/RSS and
+backendcgroup or metrics snapshots with sampling limitations. Changing hardware,
+Podquota, DBsize, endpoint/mix or competing apps requires recalibration before M5.
+
 ## M1-03 — HTTP/2 fingerprint (draft)
 
 ### Mục đích

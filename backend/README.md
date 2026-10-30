@@ -4,7 +4,7 @@ Backend chỉ cung cấp API đọc/ghi PostgreSQL để đo hệ thống bảo 
 
 ## Chỉ cần hiểu 5 file nguồn
 
-- `src/main.ts`: bật server tại `127.0.0.1:3000`.
+- `src/main.ts`: bật server theo `HOST`/`PORT`, mặc định `127.0.0.1:3000`.
 - `src/app.module.ts`: nối cấu hình, API và database với nhau.
 - `src/courses.controller.ts`: nhận 4 API và kiểm tra input.
 - `src/courses.service.ts`: SQL đọc môn/ghi đăng ký; chứa luôn kiểu dữ liệu trả về.
@@ -51,6 +51,24 @@ Recovery artifacts: `.local-backups/postgres-to-windows-20261030-140813/` contai
 The old Docker container/volume are retained and stopped. To revert immediately, stop the backend, run `docker compose up -d postgres` from the root, change only DB_PORT back to 15432, then restart and test the backend. After new writes on Windows, Docker contains stale data: back up and reconcile before reverting. Do not delete volumes or use `down -v`.
 
 The Docker instructions below are an optional alternative and historical bootstrap evidence. To use that alternative, set backend DB_PORT to 15432 explicitly. CI continues using its own temporary PostgreSQL service; K3s database networking remains unverified.
+
+## Backend image (M1-05c)
+
+`Dockerfile` builds with the existing lockfile, prunes development dependencies,
+then copies only production dependencies and compiled output to the runtime image.
+The Node 24 Debian slim base is pinned by digest; the verified runtime is 24.22.2.
+The runtime uses user `node` (UID 1000). `.dockerignore` allows only build inputs,
+excluding `.env`, local dependencies, backups, captures and test output.
+
+Native Windows startup defaults to `HOST=127.0.0.1`; the image sets
+`HOST=0.0.0.0`, `PORT=3000`. If passing the example env file to Docker, explicitly
+override HOST because that file has the Windows loopback default. The container
+reaches Windows PostgreSQL using `DB_HOST=host.docker.internal`, `DB_PORT=5432`.
+
+See [deployment/run/cleanup procedure](../docs/DEPLOYMENT.md) for the bounded
+single-container smoke. Verified: health/list/detail 200, native loopback default,
+non-root read-only runtime, demo row counts/hashes unchanged and cleanup complete.
+This is container preparation; K3s, Pod connectivity and capacity are unverified.
 
 ## Run (Docker alternative)
 

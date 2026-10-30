@@ -1,11 +1,311 @@
 # Architecture and decisions
 
-Updated: 2026-10-30. Status: Windows PostgreSQL/backend, HTTPS Gateway/JA4/H2/Akamai
-and local telemetry implemented; M1-05b container-to-Windows DB read-only probe PASS,
-cluster uninstalled and Pod path unverified.
+Updated: 2026-10-30. Status: M1 local lab scope complete: HTTPS Gateway/JA4/H2/
+telemetry → backendPod → WindowsPG, testDBwrites/races/recovery and one-Pod baseline
+verified. Working C319req/s for stated read-only profile, not maximum capacity.
+Cluster retained stopped; M2 dataset/collector not started, full AI/scale/monitoring pending.
 Source: [master plan](../DACN2_PROJECT_MASTER_PLAN.md). Report.pdf was not independently reconciled in this documentation update.
 
 ## Planned boundaries
+
+### M1 closure — integration, capacity and limitations (verified, 30/10/2026)
+
+User requested completing M1, then selected M1-05g/h and bounded M1-06 separately.
+Configured loopback upstream/listener in Go Gateway with safe native defaults,
+3sconnect/5sheader timeout, strict origin checks and privacy tests. Go fmt/vet/
+fulltests/race/buildPASS. Existing JA4/H2 fixtures/independent captures remain
+valid; actual Pod route now also tested over HTTPS/H2 with trusted lab certpin.
+No global certificate-root installation or browser-trust completion claim.
+
+M1-05h final evidence `.local-backups/m105h/1793367774888/result.json`:
+20events reconcile19HTTP1+1H2 requests; valid/invalid/duplicate/full registration
+and real Pod concurrent last-seat/duplicate races each one201/one409, counter=
+actual1. Temporary backend testDB switch guarded by ownfixture route beforePOST.
+Backend0→1: ownhealth200/proxy502/recovered200, persisted testregistration. Restore
+demoDB/replicas1; fixture rows removed, demo5/3 and test5/0 hashes unchanged.
+Test sequences advance. DNS cold-start EAI_AGAIN diagnosed from earlier logs,
+fixed by bounded no-secret/nonroot DNS initContainer; retained0restart checks.
+Recreate transitions have short observed502s during Service propagation; these
+are recorded/awaited before writes, not hidden or called zero-downtime.
+
+M1-06 pre-measurement contract in FEATURE_SPEC. Single backend500m/192Mi, server
+cap3GiB; WindowsPG17.8/5courses, generatorNode20.20.2, backendNode24.22.2,
+K3s1.35.9+k3s1, HTTP1keepalive GETcourses, laptopi5-11400H/15.77GiB. Quota differs
+from Report's reference200m/256Mi and is explicitly the tested local profile;
+do not reuse C for different quotas/DBsize/trafficmix. No tuning or invented45RPS.
+
+Discovery10/25/50/100/200/400RPS5s tiers plus2s warmup, two15s validations per
+target. Direct validation399.643/399.835goodRPS, p953.374/3.288ms;
+Gateway399.993/399.970goodRPS, p953.939/4.370ms. Each validation6000successful,
+no errors/concurrency-shed/generator-late-shed.
+Actualpeak≤32inflight, generatorRSSpeak83.61MiB; sampled hostfree≥5.7996GiB.
+Backend cgroup memory snapshots≈53.6/56MiB include sampling process and are not
+peak memory; rawCPU/throttling counters kept. SamePod/UID/quota/restarts0 throughout.
+
+C_work=floor(0.8×min four achieved validationRPS)=319req/s. 20%headroom is a
+project choice, not a measured improvement. Saturation not reached at authorized
+400RPS; result is a conservative validated working point, not maximum/universal
+capacity. Gateway/direct p95 differences are descriptive, confounded by runorder
+and shared-host activity; no isolated causal overhead/long-run stability claim.
+Reference demo220RPS therefore does not automatically demand scaling with this C;
+M2/M5 must calibrate scenario rates/quotas honestly rather than force Report numbers.
+
+Evidence `.local-backups/m106/1793367470786/result.json`,summary.csv,rawlatencies,
+gateway.log and environment.json (post-run collection of host/version/source/
+binary hashes). Whole run157.395s, generating window128.034s<180; caps400/32/256MiB.
+Gateway15946events exactly reconcile15946dispatched requests including preflight,
+all200; direct/Gateway data rowhashes unchanged. Owned Gateway/guard stopped and
+cluster stopped, resources/privateSecret retained for demo. No load left running.
+
+Final backend no-fixESLint/build/8unit/9E2EPASS. Rootscripts syntax, manifest
+APIserverdryrun, actual negative/recovery/concurrency boundaries and security/scope
+review performed. No dependency changes, secret commits, stage/reset/push or
+public traffic. HostedCI remains unverified; M1 completion is not M0 closure,
+production release, four-class model, real-user validation or full1–5Pod capacity.
+Next proposed M2-01: define/test12features before5s aggregation or bulk data.
+
+### M1-05g — backend Deployment/NodePort (verified, 30/10/2026)
+
+User selected agent deployment. Tracked `kubernetes/backend.yaml` and
+`scripts/backend-lab.cjs` provide one192Mi/500m bounded backend replica and Service
+NodePort30080, published only Windowsloopback13000. Server cap3GiB verified; all
+host bindingsloopback. Namespace dacn2-lab, no Pod serviceaccounttoken/RBAC grants,
+UID1000/read-onlyrootfs/dropcaps. Recreate strategy avoids surge but has downtime.
+Trust boundary/probe limitations and Secret creation defined in API_CONTRACT
+before applying. `/health` remains process-only; explicit course reads verify DB.
+
+Private passwordSecret created via stdin, output nameonly; tracked manifest only
+secretKeyRef. Admin cluster datastore access can retrieve it; no encrypted-store
+or production-auth claim. Cached backend image unchanged and imported singleamd64;
+firstimageinspect missing but reinventory resolved existing immutableimageID.
+
+Serverdryrun+apply PASS, oneReadyPod, GET health/list/detail200, invalidID400/
+missingID404. RuntimeNode24.22.2/nonroot/notoken/no.env; repeatverification0restart/
+noOOM, demo hashes/counts unchanged, cluster stopped. First create had2exit1
+restarts before Ready; cause not captured, not silently counted as0 or claimed
+fixed. Repeated cold-start0restart verified. Evidence
+`.local-backups/m105g/1793366302157/result.json`; earlier attempt retained separately.
+No Gatewayretarget/demoDBwrite/load. User subsequently selected M1-05h integration/
+testDBwritefixture/recovery, still not complete at this checkpoint.
+
+### M1-05f — actual Pod to Windows PostgreSQL (verified, 30/10/2026)
+
+User selected bounded disposable Pod probe, without DB writes or HBA/firewall/
+Gateway changes. Reused owned `dacn2-m105e`, fresh available RAM6.0527GiB before
+successful run; started only after≥5GiB gate. Imported cached postgres17-alpine
+from Docker into K3s/containerd; no image pull/package install. Direct tag import
+first failed with a missing content digest in the multi-platform index. Exporting
+only cached linux/amd64 with `docker image save --platform=linux/amd64`, then
+`k3d image import <archive> --mode direct` succeeded. Failed attempt stopped own
+cluster; final attempt28.299s. No image/source version changed to make this pass.
+
+Docker source image ID266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b;
+single-platform archive SHA256cd05347baf06a0ecff31d67b9ff71a534a3bae5e7f6658a64cca2aee39a2b32c;
+observed Pod imageIDab20e934b27ba3ff927c1b4c9ff8cf6c32f315f743efe68dd3441182a87fb085.
+Different index/archive/runtime IDs are recorded, not falsely equated.
+
+Pod `dacn2-db-probe-1793365214835-bc3ea7`, UIDae5c5acf-3eed-4912-b602-d66d32c15056,
+IP10.42.0.20 onserver0; imagePullPolicyNever, no mountedserviceaccounttoken,
+UID/GID65534/nonroot, read-onlyrootfs/dropALL/noPrivilegeEscalation/seccompRuntimeDefault.
+Requests10m/16Mi, limits250m/64Mi, Neverrestart, activeDeadline300s. Overall10minute
+helper bound, perconnection3s/statement5s/SQLprocess15s; no load generated.
+
+From actual Pod: `getent hosts host.docker.internal` returned IPv6
+fdc4:f303:9324::254 (not a complete A/AAAA inventory or proof which address libpq
+selected); `pg_isready` accepted TCP5432. A credential-free PostgreSQL startup
+packet received AuthenticationSASL(type10) advertising SCRAM-SHA-256. Subsequent
+psql password login+readonlySELECT on dacn2/dacn2_test succeeded asdacn2_app.
+Actual server PostgreSQL17.8/windows, server/client addresses127.0.0.1, sslfalse;
+read_onlyon. Thus the present Pod route is verified without opening HBA/firewall.
+Observed loopback source does not establish raw Pod IP as DB client identity,
+universal networking across restarts/hosts, or TLS for a future remote DB path.
+
+Demo5courses/3registrations, test5courses/0registrations; row hashes matched host
+read-only baseline before and after. No fixture/writes/schema/sequence changes
+issued. Password read from ignored backend.env only in helper memory, sent over
+kubectlexec stdin, exported only in short-lived psql process; absent from Pod
+spec/Secret/env/command args/files/output. API exec admin transport remains local
+and uses the existing private kubeconfig, not a new public control endpoint.
+
+Own Pod UID/runlabel verified before deletion; absence verified while API live,
+then owncluster stopped. Default kubeconfig unchanged/absent; originalDBcontainer
+and WindowsDB/backend/Gateway untouched. Final hostfree5.5933GiB; source/archive/
+imported image retained ignored/local. Evidence
+`.local-backups/m105f/1793365214835-bc3ea7/result.json`, secret-free pod.json/logs,
+helper `.local-backups/m105f/probe.cjs`; failed-import evidence separate run.
+No app tests/benchmark/production validation claimed for infrastructure probe.
+
+M1-05f DONE; M1-05 not complete. Next proposed M1-05g: deploy backend1replica
+with bounded resources and app credentials private, test loopbackNodePort health/
+course reads, then stop owncluster. Describe scope/wait for user selection first;
+no automatic Gatewayretarget/demoDBwrites/load. Procedure in
+[DEPLOYMENT](DEPLOYMENT.md#m1-05f-pod-database-probe).
+Primary references: [Pod security fields](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/),
+[psql](https://www.postgresql.org/docs/17/app-psql.html),
+[Docker host alias](https://docs.docker.com/desktop/features/networking/networking-how-tos/).
+
+### M1-05e — empty cluster trial/recovery (verified, 30/10/2026)
+
+User selected agent work and closed apps, including VS Code, after RAM readings
+4.64–4.94GiB. No apps closed by agent. First helper run refused create
+at4.9358GiB. After user action RAM6.71GiB, and before retained successful create
+6.3876GiB. No resource gate was lowered.
+
+Downloaded `.local-backups/tools/k3d-v5.9.0.exe` and `kubectl-v1.35.9.exe`;
+actual SHA256s match publisher values in M1-05d. Binary versions verified;
+k3d binary default K3s1.35.5 explicitly overridden to1.35.9+k3s1. Pulled exact
+K3s image, RepoDigest matches recorded OCI index. k3d also pulled its standard
+5.9.0 tools helper. No global install/PATH/kubeconfig change.
+
+Created `dacn2-m105e`: one server/zeroagent/noLB, noTraefik/ServiceLB,3072MiB
+server cap. Standard k3d-tools helper is a second container, not a K3s agent.
+API127.0.0.1:16443→6443 and futurebackend127.0.0.1:13000→30080 confirmed
+in Docker bindings; no backend Service/Pod exists. API `/readyz`ok, nodeReady
+with Memory/Disk/PIDPressureFalse; CoreDNS/local-path/metrics-server all Running/
+ready after warmup and stop/start. No observed server OOM, Docker restart or Pod
+container restart. Metrics-server initially sampled before readiness; bounded90s
+rollout wait passed without config changes. This is not a benchmark or completion
+of the Prometheus/Grafana monitoring stack.
+
+Retained-cluster checks finished within143.532s of its create attempt, under
+the10minute bound. Sampled hostfree minimum5.6793GiB across create/recovery runs,
+final5.6848GiB; samples do not establish transient minima between measurements.
+Final own server/tools stopped, volumes/network/images retained. Original stopped
+PostgreSQL container/volume retained; no WindowsDB queries/writes, app/env/HBA/
+firewall/WSLsettings or user service changes in this slice. Server3GiBcap does
+not cap the tools helper or total Docker/WSL memory.
+
+Admin kubeconfigs stay only in ACL-restricted ignored per-run directories; no
+credential printed/merged. Default `~/.kube/config` absent before/after;
+Dockerkubectl remains1.32.2. Main evidence
+`.local-backups/m105e/1793364531571/result.json`; supplementary all-system-ready
+recovery evidence `.local-backups/m105e/1793364531571-resume-1793364615141/result.json`.
+Secret-free helper `.local-backups/m105e/trial.cjs`; logs/evidence local-only.
+
+Failures corrected: port filter without`:direct` defaults to proxy and fails
+with noLB; pinned `pkg/client/ports.go`/`pkg/util/filter.go` verified direct suffix.
+Helper initially assumed one total container and API key6443/tcp; corrected
+ownership for k3d-tools and normalized Docker key6443, removed the own failed
+cluster and reran. Actual hostIP/hostPort assertions retained. No PASS inferred
+solely from the k3d create message.
+
+Scope M1-05e DONE; M1-05 incomplete. Next proposed M1-05f: bounded disposable Pod
+DNS/TCP/SCRAM/read-only WindowsDB probe, after user scope choice; no backend
+deployment, HBA/firewall changes or Gateway retarget automatically.
+See [reuse/test/cleanup](DEPLOYMENT.md#reuse-the-stopped-m1-05e-cluster).
+
+### M1-05d — resource/version preflight and trial design (complete, 30/10/2026)
+
+User selected agent work and clarified that low free RAM is caused by open apps;
+the user will close them when needed. Do not treat one snapshot as permanent
+hardware insufficiency or close applications automatically. No need to close apps
+for this audit. Actual cluster trial still requires a fresh RAM check.
+
+Measured:15.77GiB total/2.83GiB free; C20.75GiB and D65.48GiB free.
+Docker28.1.1 Linux/x86_64,12vCPU,guest MemTotal8201146368bytes (not additional host
+RAM). No running containers; old dacn2-postgres-1 remains stopped. Existing backend,
+Node and PostgreSQL images retained. Only Docker-bundled kubectl1.32.2 found;
+no k3d/k3s/kind/minikube on PATH, no context names. No .wslconfig. Ports16443/13000/
+3000/8443 have no listener; WindowsPG5432 still listens IPv4/IPv6. No DB login or
+queries repeated in this audit. Evidence `.local-backups/m105d-survey.json` and
+registry manifest/source snapshots with prefix `m105d-` (ignored/secret-free).
+
+Selected candidate (release metadata and source/registry checked, NOT runtime
+compatibility certification):
+
+- k3d **v5.9.0**, release2026-06-02, Windowsamd64 asset SHA256
+  `49d0b9c796f5b8ba6f58a1dd5469e8b7b34bf9b6ce9078633eedb2789680a034`.
+  Annotated tag resolves to source commit
+  `15dd1e2dbd62c53ed990fce9b7332335e8cb053c`. Inspected create flags and version.go.
+- K3s **v1.35.9+k3s1**, release2026-09-30, image
+  `rancher/k3s:v1.35.9-k3s1`; expected OCI index digest
+  `sha256:ec9868c6a38d4e8c1869832fb5fd1eb8473c39794a0b44d2b952e7ba911951bc`,
+  linux/amd64 manifest
+  `sha256:b87c71679c0be70cab5eb34f05ebe5e2906bf80fbd1d99b389c1e9643954520c`.
+  Choose a supported, more established minor rather than adopting1.37 for this
+  first lab trial. Override the k3d source fallback1.32.5 explicitly; do not infer
+  the actual release binary default from source or allow a floating latest tag.
+- kubectl **v1.35.9** Windowsamd64, published checksum
+  `160bebf50d49ac4b5892370803da09cc26bbeabed6a4cf22bf382bd72d14d4d7`.
+  Same minor as API. Existing1.32.2 is outside the allowed ±1minor skew for1.35;
+  preserve it and use explicit project-local executable paths, no global PATH edits.
+
+Binary checksums are expected publisher values, not hashes of downloaded binaries:
+none were downloaded/executed here. K3s registry metadata exists; no image pull.
+Check downloaded bytes/digests before use in the next selected slice. Generic
+k3d compatibility docs have old release entries, not proof for this pair. CLI
+syntax/source and Kubernetes skew checks pass; Docker28/k3d5.9/K3s1.35 runtime
+compatibility remains NOT_TESTED until trial. Do not silently downgrade on failure.
+
+Trial design: one named cluster `dacn2-m105e`, one server/zero agents, no nginx LB,
+Traefik or ServiceLB; retain CoreDNS/flannel/local-path/metrics-server initially.
+Keep WindowsPG and Gateway; embedded SQLite is only the cluster datastore. No
+backend Pod, app Secret, DB write, Gateway retarget, load or benchmark in the first
+empty-cluster trial. k3d server is a privileged lab container, unlike backend
+runtime; do not apply backend drop-cap/non-root settings to K3s internals.
+
+Fresh ≥5GiB Windows available RAM is a conservative project heuristic before
+trial, not vendor minimum nor evidence this machine cannot run K3s. Proposed
+server memory cap3072MiB; no CPU cap claimed (observe CPU, no workload). Guest
+MemTotal must not be added to host available RAM. Stop on host available RAM<1GiB,
+server OOM/repeated restarts, severe responsiveness loss or setup timeout180s.
+Cap and threshold are trial settings to evaluate, not measured capacity. Plan an
+outer10minute deadline for pull/create/check/cleanup; registry slowness is an
+explicit failure/defer outcome, not a reason for unbounded waiting.
+
+Map API127.0.0.1:16443 and reserve127.0.0.1:13000→serverNodePort30080 for the later
+backend slice. No LAN publication. Use --kubeconfig-update-default=false and
+--kubeconfig-switch-context=false; save kubeconfig only inside ignored
+`.local-backups/m105e/`, restrict it locally, never print/commit it. Inspect live
+Docker port bindings and client --help after installation before declaring safe
+exposure. No existing kubeconfig, distro, firewall/HBA or Docker/WSL settings changed.
+See [trial steps and acceptance](DEPLOYMENT.md#m1-05e-trial-design-and-execution).
+
+Sources checked2026-10-30: [k3d5.9 release](https://github.com/k3d-io/k3d/releases/tag/v5.9.0),
+[checksums](https://github.com/k3d-io/k3d/releases/download/v5.9.0/checksums.txt),
+[pinned create source](https://github.com/k3d-io/k3d/blob/15dd1e2dbd62c53ed990fce9b7332335e8cb053c/cmd/cluster/clusterCreate.go),
+[K3s release](https://github.com/k3s-io/k3s/releases/tag/v1.35.9%2Bk3s1),
+[kubectl checksum](https://dl.k8s.io/release/v1.35.9/bin/windows/amd64/kubectl.exe.sha256),
+[Kubernetes skew](https://kubernetes.io/releases/version-skew-policy/),
+[K3s baseline excluding workloads](https://docs.k3s.io/installation/requirements),
+[server options](https://docs.k3s.io/cli/server).
+
+### M1-05c — backend container preparation (verified, 30/10/2026)
+
+User selected agent implementation. Native `main.ts` now accepts HOST while keeping
+127.0.0.1 as the default; the image sets HOST0.0.0.0/PORT3000, and host publication
+is explicitly loopback-only. Preserve the current direct-client lab boundary;
+this does not authorize exposing the unauthenticated write workload publicly.
+
+Multi-stage Dockerfile uses official Node24-bookworm-slim pinned to
+`sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c`
+(actual24.22.2). Node24 LTS chosen over the host/old-CI Node20; CI upgrade is outside
+this slice. `npm ci` uses the unchanged lockfile, build heap384MiB, then prune dev
+dependencies. Runtime copies package/dist/production modules, USERnode/UID1000;
+allowlist `.dockerignore` excludes env/backups/artifacts from context. No new npm
+dependency or schema/env-secret change. Docker pattern follows
+[official Docker Node guide](https://docs.docker.com/guides/nodejs/) and
+[official image practices](https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md);
+runtime line checked against [Node releases](https://nodejs.org/en/about/previous-releases).
+
+No-fix lint/build/8unit/9E2E PASS on host; image build and bounded runtime smoke PASS.
+192MiB/no-swap/0.5CPU/64PIDs/read-only/dropcaps/no-new-privileges; default CMD.
+Native compiled bind127.0.0.1 verified; container health/list/detail200 via
+host.docker.internal5432; no `.env`/src/CLI in runtime. Demo5courses/3registrations
+and row hashes unchanged. Own processes/containers removed; image/cache retained.
+Evidence `.local-backups/m105c/1793363254953/result.json`; procedure in
+[DEPLOYMENT](DEPLOYMENT.md). First helper run left the own smoke container because
+Node Windows signal termination sets signalCode while exitCode stays null; fixed
+helper and explicitly removed owned container before successful rerun. No app bug
+or user process affected. Initial available RAM1.63GiB; no cluster attempted.
+
+Container ENV credentials use existing app env via `--env-file` only at runtime,
+never build args/context/image or output; Docker administrators can inspect runtime
+metadata until container removal. Container read smoke does not establish full
+Node24 E2E, Pod networking, capacity, production or academic acceptance.
+Next proposed M1-05d: resource/version preflight and minimal K3s trial plan;
+describe purpose/scope and wait for user selection before work. Cluster creation
+is a later separately selected slice after resource readiness.
 
 ### M1-05b — disposable-container DB path (verified, 30/10/2026)
 

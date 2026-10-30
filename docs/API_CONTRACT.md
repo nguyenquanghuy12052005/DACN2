@@ -10,6 +10,32 @@ The backend is an isolated lab workload. `studentCode` is a caller-supplied synt
 
 ## Read operations
 
+### K3s lab boundary and probe semantics (M1-05g)
+
+The verified backend Deployment runs one trusted lab replica in `dacn2-lab`.
+Container HOST0.0.0.0 is necessary for Service access; host exposure remains
+only Docker127.0.0.1:13000→NodePort30080, with Kubernetes API127.0.0.1:16443.
+Cluster Pods and the local Windows account/Docker administrators are trusted lab
+operators, not authenticated end users. No public/LAN publication or external
+user access is authorized by this deployment. Caller studentCode remains a lab
+identifier; forwarding headers are not identity or authorization. No namespace
+RBAC grant or service-account token is given to the backend Pod.
+
+`/health` reports process HTTP liveness, not ongoing DB availability. An unprivileged
+DNS-wait initContainer precedes app startup; the app establishes a DB connection
+before listen. Startup/readiness/liveness probes use this existing endpoint.
+Readiness later remaining200 during a DB outage is a
+known limit; no DB-readiness or production availability claim. Successful
+`/courses` and detail smoke must separately establish current DB connectivity.
+
+DB password is created as a namespace-local Secret through kubectl stdin from
+ignored backend/.env, referenced with secretKeyRef; no real password in tracked
+YAML, arguments, logs or example files. The local cluster datastore retains that
+Secret, and its admin kubeconfig/Docker access can retrieve it: base64 storage is
+not encryption. Keep admin artifacts private; no production secret-store claim.
+Only scoped lab app credentials are used. Existing WindowsPG route has sslfalse,
+limited to the controlled local lab; no remote TLS guarantee.
+
 - `GET /health`: 200 with service status.
 - `GET /courses`: 200, array of `{ id, code, name, capacity, registeredCount, availableSeats }`.
 - `GET /courses/:id`: 200 with the same course summary; 400 for invalid ID, 404 for missing course.
