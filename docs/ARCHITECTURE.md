@@ -5,6 +5,10 @@ Source: [master plan](../DACN2_PROJECT_MASTER_PLAN.md). Report.pdf was not indep
 
 ## Planned boundaries
 
+### Local DB hosting override — 2026-10-30 (verified)
+
+At the user's request, use the already installed Windows PostgreSQL 17 at 127.0.0.1:5432 instead of requiring Docker Desktop for local backend work. Data directory: C:/Program Files/PostgreSQL/17/data. Restore both existing databases, preserve owners/grants/sequences and application password; DACN1 remains untouched. Owner dacn2_admin is NOLOGIN/NOCREATEDB/NOSUPERUSER; backend uses dacn2_app with existing limited grants. Docker DB on 15432 is stopped, with volume retained for recovery. Backups, row-hash/sequence comparisons, Windows E2E and smoke after stopping Docker are documented in docs/PROGRESS.md. This changes local DB hosting only; Go/Python/NestJS/PostgreSQL/K3s boundaries and isolated CI service remain. Pod-to-Windows DB connectivity is not implemented or verified. Earlier Compose topology/resource measurements below are historical.
+
 - Go Gateway terminates TLS, proxies admitted traffic, captures HTTP/TLS/H2 evidence, aggregates five-second windows, and applies per-client policy.
 - Python/FastAPI validates window contracts, runs four-class ML inference, coordinates policy, and controls scaling.
 - NestJS/PostgreSQL provide a dynamic demo workload; K3s scales backend replicas from admitted RPS and measured one-Pod capacity.

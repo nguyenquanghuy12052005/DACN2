@@ -2,7 +2,8 @@
 
 Updated: 2026-10-30 (Asia/Bangkok).
 Phase: M1 Gateway/TLS/JA4 implementation; hosted M0 CI evidence still pending in tracker.
-Task type: session checkpoint; user explicitly requested stopping work here.
+Task type: M0-02b local database migration completed at user's request; M1 feature work remains paused pending scope selection.
+Latest override (2026-10-30): local DB moved from Docker 15432 to existing Windows PostgreSQL 17 at 5432. Demo 5 courses/3 registrations and test 5 courses/0 registrations restored; both table hashes and sequence states matched Docker. App password unchanged, backend env port/example/docs updated. Owner dacn2_admin NOLOGIN/NOCREATEDB; app non-admin. ESLint/build, 8 unit/9 E2E PASS. Docker DB stopped with volume retained; compiled health/list/detail smoke PASS afterward on 3300 and smoke process stopped. Backups and evidence: .local-backups/postgres-to-windows-20261030-140813/. No extra synthetic records or API logic changes. HEAD now 1dab3c8; no remote/CI check or commit/push. Older runtime/PID/15432 handoff below is historical; use docs/PROGRESS.md first section for current state.
 Handoff: diagnostic Chrome H2 capture PASS (35 packets/0 drop, 11 decoded H2 packets); Postman/Chrome JA4 independently matched, but live H2 observer/Akamai serialization and Gateway JA4 raw/original variants remain incomplete. Latest read-only runtime check: Gateway 8443 PID 13316 and backend 3000 PID 9432 running, no dumpcap; kept as observed. Gateway PID 10340 was stopped after earlier diagnostics; the new process's keylog env is unverified. Clear DACN2_TLS_KEYLOG before normal restart. Evidence/next steps in docs/PROGRESS.md, especially the first handoff section. No new traffic/tests/code/commit/push in checkpoint. Resume only on user request, explain purpose before small steps and wait for the user's choice. Hosted M0 CI evidence still missing from tracker.
 Plan: [DACN2_PROJECT_MASTER_PLAN.md](../DACN2_PROJECT_MASTER_PLAN.md).
 

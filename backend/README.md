@@ -16,7 +16,43 @@ API giữ lại: `GET /health`, `GET /courses`, `GET /courses/:id`, `POST /cours
 
 Tests chỉ có `test/backend.spec.ts` (unit) và `test/backend.e2e-spec.ts` (API + PostgreSQL). `test/setup-env.ts` buộc E2E dùng DB test; `fixtures/grants.sql` cấp quyền dọn fixture. Ba SQL trong `database/migrations/` giữ lại vì đã áp dụng trên DB hiện có. `.env` là cấu hình riêng; `node_modules/`, `dist/`, `coverage/` là file tự sinh, không cần đọc/sửa.
 
-## Run
+## Windows PostgreSQL (current local setup)
+
+Updated 2026-10-30: the local backend uses PostgreSQL 17 directly on Windows, at `127.0.0.1:5432`. Its data directory is `C:/Program Files/PostgreSQL/17/data`. Docker Desktop is not required for this backend workflow. The existing DACN1 database was not modified.
+
+Both `dacn2` and `dacn2_test` have been restored from Docker backups, including schema, data, grants and identity sequences. Do not run migrations 001–003 again. `dacn2_admin` owns the databases/objects and is NOLOGIN/NOCREATEDB/NOSUPERUSER; administer through the existing Windows `postgres` account. `dacn2_app` is the non-admin backend login. Its password is unchanged in ignored `backend/.env`; only DB_PORT changed from 15432 to 5432. Never use `postgres` credentials in the application.
+
+With the PostgreSQL Windows service running, from the repository root:
+
+```powershell
+Set-Location .\backend
+npm run start:dev
+```
+
+Dependencies are already installed on this machine; use `npm ci` when installing a clean source copy. Stop the backend with Ctrl+C. For DB startup/shutdown, use Windows Services and the PostgreSQL 17 service; stopping it also affects DACN1. Do not start Docker for normal backend development.
+
+To check application authentication directly (enter the existing DB_PASSWORD at the hidden prompt):
+
+```powershell
+& "C:\Program Files\PostgreSQL\17\bin\psql.exe" -h 127.0.0.1 -p 5432 -U dacn2_app -d dacn2 -W -c "SELECT code, name FROM courses ORDER BY code"
+```
+
+In pgAdmin, refresh Databases under the existing `localhost:5432` server to see `dacn2` and `dacn2_test`. Query Tool on `dacn2` can inspect:
+
+```sql
+SELECT COUNT(*) FROM courses;
+SELECT COUNT(*) FROM registrations;
+```
+
+At migration verification: demo 5 courses/3 registrations, test 5 courses/0 registrations. Full row hashes and sequence states matched Docker before E2E; E2E cleanup retained the test counts. Lint/build, 8 unit/9 E2E and compiled health/list/detail smoke passed on Windows; smoke also passed with the Docker DB stopped.
+
+Recovery artifacts: `.local-backups/postgres-to-windows-20261030-140813/` contains `dacn2.dump`, `dacn2_test.dump`, `backend.env.before` and verification JSON. Backups include the existing data, not global roles/passwords. Windows roles were created separately; restore was run with `pg_restore --exit-on-error --single-transaction` into new empty databases, preserving ownership/grants. For recovery on a new instance, provision those roles and empty UTF-8 databases before restoring; do not restore over a populated database without a separate recovery plan.
+
+The old Docker container/volume are retained and stopped. To revert immediately, stop the backend, run `docker compose up -d postgres` from the root, change only DB_PORT back to 15432, then restart and test the backend. After new writes on Windows, Docker contains stale data: back up and reconcile before reverting. Do not delete volumes or use `down -v`.
+
+The Docker instructions below are an optional alternative and historical bootstrap evidence. To use that alternative, set backend DB_PORT to 15432 explicitly. CI continues using its own temporary PostgreSQL service; K3s database networking remains unverified.
+
+## Run (Docker alternative)
 
 The existing local setup uses root .env for Docker and backend/.env for application DB access (use the corresponding examples with your own secrets). Host DB port is 15432; container port is 5432. Do not print or commit secrets.
 
