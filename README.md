@@ -21,7 +21,7 @@ Primary lab journey: start the controlled backend/Gateway, run legitimate traffi
 - Clean setup verified on 2026-10-29 using an isolated PostgreSQL volume and a clean backend source copy with `npm ci`: role/password, migrations, tests and compiled-backend health/list/detail all passed. This verifies setup on the existing Windows/Docker host, not prerequisite installation on another machine.
 - Local PostgreSQL 17 now runs directly on Windows at 127.0.0.1:5432; the backend binds to 127.0.0.1:3000. Docker's former database on 15432 is stopped and retained for recovery. Migration evidence is in [checkpoint](docs/PROGRESS.md).
 - Report.pdf is present; its contents were not independently reconciled during this Markdown review.
-- HTTPS Go Gateway and JA4 are implemented locally; independent Postman JA4 and real-Chrome HTTP/2 diagnostic capture have evidence. Live H2 fingerprint extraction, dataset/model, inference, K3s, scaling and monitoring remain. Model training is planned on Google Colab. k3d/K3s is not installed; full-lab resource feasibility remains unverified.
+- HTTPS Go Gateway, four JA4 variants, bounded H2/HPACK/Akamai extraction and local request telemetry/health are implemented. Independent Postman JA4 and same-session Chrome H2/hash comparisons have evidence. Dataset/model, inference, K3s, scaling and monitoring remain. Model training is planned on Google Colab. k3d/K3s is not installed; full-lab resource feasibility remains unverified.
 
 ## Run the local backend
 
@@ -42,6 +42,48 @@ npm run start:dev
 The PostgreSQL Windows service must be running. Do not start the old Docker database for normal local development.
 
 In another terminal, `Invoke-RestMethod http://127.0.0.1:3000/health` should return HTTP 200. See the [backend guide](backend/README.md#checks) for course smoke checks, unit/E2E tests, build and stop commands. E2E uses the separate `dacn2_test` database. Registration accepts synthetic lab codes; authenticated user identity is not implemented.
+
+## Run the local Gateway
+
+With the backend running on Windows PostgreSQL, stop an older Gateway in its terminal
+with Ctrl+C before restarting. From a separate PowerShell terminal:
+
+```powershell
+Set-Location D:\DACN2\gateway
+Remove-Item Env:DACN2_TLS_KEYLOG -ErrorAction SilentlyContinue
+go run .
+```
+
+Existing ignored `cert.pem`/`key.pem` are required. GET `https://127.0.0.1:8443/health`
+from the established lab client. A new HTTP/2 TLS connection produces one
+`H2 observation` JSON event with metadata/pseudo-header names; normal HTTP/1.1
+requests produce no H2 event. Complete supported metadata includes `akamai` with
+`format`, `text` and `md5`. Missing/unsupported observations have `akamai: null`
+with `akamai_reason`; `headers_observed` alone does not guarantee a fingerprint.
+One isolated Chrome headless session passed independent TShark metadata/Node hash
+comparison (35 packets/0 drop, health200); see checkpoint for evidence and limits.
+ClientHello logs include JA4, JA4_r, JA4_o and JA4_ro; original variants preserve
+wire order and may change across browser sessions. Stop with Ctrl+C.
+
+Gateway-owned `GET /gateway/health` returns `service=dacn2-gateway` without contacting
+the backend; `/health` still returns backend health through the proxy. HEAD on local
+health returns200 without a body; other methods return405 with Allow GET, HEAD.
+After restarting with M1-04 code, each handled HTTP request emits one JSON
+`gateway_request` line (stdout) with generated X-Request-ID, connection ID, peer IP,
+bounded route, latency_ms, committed status/body bytes and classified errors.
+Incoming forwarding/request-ID headers are not trusted; no raw query/body/header
+values are recorded in these events. See [API contract](docs/API_CONTRACT.md) for
+status/null/error semantics and the difference between liveness and backend health.
+No TLS session keys are logged unless DACN2_TLS_KEYLOG is explicitly set.
+
+To verify observer code without the real backend, from gateway:
+
+```powershell
+go test -run 'TestLiveH2|TestH2|TestTLSReadWrapperProxy|TestGatewayHealth|TestTelemetry' -v -count=1 -timeout 30s .
+```
+
+Tests use temporary loopback servers and clean them up; the silent-peer test takes
+about two seconds. See [feature contract](docs/FEATURE_SPEC.md) for limits/evidence.
 
 ## Delivery boundaries
 

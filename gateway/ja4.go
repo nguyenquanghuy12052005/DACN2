@@ -78,62 +78,82 @@ func asciiAlphanumeric(value byte) bool {
 		value >= 'a' && value <= 'z'
 }
 
-func ja4CipherHash(ciphers []uint16) string {
+// Lists are newly allocated: sorting must never mutate ClientHello slices.
+func ja4CipherRaw(ciphers []uint16, original bool) string {
 	values := make([]string, 0, len(ciphers))
-
-	for _, cipher := range ciphers {
-		if !isGREASE(cipher) {
-			values = append(values, fmt.Sprintf("%04x", cipher))
+	for _, value := range ciphers {
+		if !isGREASE(value) {
+			values = append(values, fmt.Sprintf("%04x", value))
 		}
 	}
-
-	if len(values) == 0 {
-		return "000000000000"
+	if !original {
+		sort.Strings(values)
 	}
-
-	sort.Strings(values)
-	raw := strings.Join(values, ",")
-	sum := sha256.Sum256([]byte(raw))
-
-	return fmt.Sprintf("%x", sum)[:12]
+	return strings.Join(values, ",")
 }
 
-func ja4ExtensionHash(
-	extensions []uint16,
-	signatures []tls.SignatureScheme,
-) string {
+func ja4ExtensionRaw(extensions []uint16, signatures []tls.SignatureScheme, original bool) (string, string) {
 	values := make([]string, 0, len(extensions))
-
-	for _, extension := range extensions {
-		if !isGREASE(extension) && extension != 0 && extension != 16 {
-			values = append(values, fmt.Sprintf("%04x", extension))
+	for _, value := range extensions {
+		if !isGREASE(value) && (original || value != 0 && value != 16) {
+			values = append(values, fmt.Sprintf("%04x", value))
 		}
 	}
-
-	if len(values) == 0 {
-		return "000000000000"
+	if !original {
+		sort.Strings(values)
 	}
-
-	sort.Strings(values)
-	raw := strings.Join(values, ",")
-
-	signatureValues := make([]string, 0, len(signatures))
+	base := strings.Join(values, ",")
+	sigs := make([]string, 0, len(signatures))
 	for _, signature := range signatures {
 		value := uint16(signature)
 		if !isGREASE(value) {
-			signatureValues = append(
-				signatureValues,
-				fmt.Sprintf("%04x", value),
-			)
+			sigs = append(sigs, fmt.Sprintf("%04x", value))
 		}
 	}
-
-	if len(signatureValues) > 0 {
-		raw += "_" + strings.Join(signatureValues, ",")
+	raw := base
+	if len(sigs) > 0 {
+		raw += "_" + strings.Join(sigs, ",")
 	}
+	return base, raw
+}
 
+func ja4Hash(raw string, empty bool) string {
+	if empty {
+		return "000000000000"
+	}
 	sum := sha256.Sum256([]byte(raw))
 	return fmt.Sprintf("%x", sum)[:12]
+}
+
+func ja4CipherHash(ciphers []uint16) string {
+	raw := ja4CipherRaw(ciphers, false)
+	return ja4Hash(raw, raw == "")
+}
+
+func ja4ExtensionHash(extensions []uint16, signatures []tls.SignatureScheme) string {
+	base, raw := ja4ExtensionRaw(extensions, signatures, false)
+	return ja4Hash(raw, base == "")
+}
+
+type ja4Fingerprints struct {
+	JA4         string
+	Raw         string
+	Original    string
+	RawOriginal string
+}
+
+func ja4Variants(hello *tls.ClientHelloInfo) ja4Fingerprints {
+	prefix := ja4Prefix(hello)
+	cipherRaw := ja4CipherRaw(hello.CipherSuites, false)
+	_, extensionRaw := ja4ExtensionRaw(hello.Extensions, hello.SignatureSchemes, false)
+	originalCipherRaw := ja4CipherRaw(hello.CipherSuites, true)
+	originalExtensionBase, originalExtensionRaw := ja4ExtensionRaw(hello.Extensions, hello.SignatureSchemes, true)
+	return ja4Fingerprints{
+		JA4:         ja4(hello),
+		Raw:         prefix + "_" + cipherRaw + "_" + extensionRaw,
+		Original:    prefix + "_" + ja4Hash(originalCipherRaw, originalCipherRaw == "") + "_" + ja4Hash(originalExtensionRaw, originalExtensionBase == ""),
+		RawOriginal: prefix + "_" + originalCipherRaw + "_" + originalExtensionRaw,
+	}
 }
 
 func ja4(hello *tls.ClientHelloInfo) string {

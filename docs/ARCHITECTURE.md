@@ -1,9 +1,176 @@
 # Architecture and decisions
 
-Updated: 2026-10-30. Status: local backend and HTTPS Gateway/JA4 implemented; broader lab architecture planned.
+Updated: 2026-10-30. Status: Windows PostgreSQL/backend, HTTPS Gateway/JA4/H2/Akamai
+and local telemetry implemented; M1-05b container-to-Windows DB read-only probe PASS,
+cluster uninstalled and Pod path unverified.
 Source: [master plan](../DACN2_PROJECT_MASTER_PLAN.md). Report.pdf was not independently reconciled in this documentation update.
 
 ## Planned boundaries
+
+### M1-05b — disposable-container DB path (verified, 30/10/2026)
+
+The user authorized a bounded disposable container probe after the read-only audit.
+Container DNS/TCP/authentication succeeds on the current Docker Desktop setup;
+this supersedes M1-05a's unresolved container-path question, not its actual WSL probe
+results. No HBA/firewall/hosts/env/database-data changes were needed.
+
+- Used already cached postgres17-alpine image ID/digest
+  sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b,
+  with client commands as entrypoint, no PostgreSQL server initialization or pull.
+  Probe used default bridge, non-root65534, read-only rootfs, all capabilities
+  dropped/no-new-privileges,64MiB RAM/no extra swap,0.25CPU/32PID,15s timeout and --rm.
+- Container DNS resolves host.docker.internal to192.168.65.254 (IPv4) and
+  fdc4:f303:9324::254 (IPv6); embedded resolver192.168.65.7. These are Docker Desktop
+  internal addresses, not the stale distro resolver result from M1-05a. Do not pin
+  these numeric addresses in app config: use the host alias and revalidate on topology changes.
+- TCP5432 PASS. Pre-auth psql reached password request, then existing dacn2_app
+  password was supplied via stdin to the temporary shell (not command arguments,
+  Docker create-time environment or a secret file). It was exported only inside
+  the short-lived process for psql. Credentials were not printed or stored in evidence.
+- Read-only SELECT PASS on Windows PostgreSQL17.8 for both dacn2 and dacn2_test.
+  SQL confirms transaction_read_only=on,server_addr=127.0.0.1,client_addr=127.0.0.1,
+  role=dacn2_app,ssl=false. This observed peer explains why existing loopback SCRAM
+  rules permit this Docker Desktop path without broadening authentication.
+- Observed data: dacn2=5courses/3registrations; dacn2_test=5courses/0registrations.
+  Connection timeout3s/statement timeout5s, SELECT only; no seed/migration/write test.
+- Own probe containers removed; old dacn2-postgres-1 remains stopped, original
+  Windows PostgreSQL/Gateway/backend remain running as before. No source/app tests
+  changed or rerun, no cluster/image/network provisioned. Cleanup inventory checked.
+
+Evidence ignored: `.local-backups/m105b-1793352300802-c4bcef/result.json` and
+`.local-backups/probe-pg-container.cjs`. The helper reads the existing ignored app
+env; it rejects unexpected host/port/role without printing values, and cleanup
+checks its own unique label before force-removing a timed-out probe.
+
+Scope limits: normal Docker container on bridge is not a nested K3s Pod. CoreDNS,
+node networking, actual Pod source identity/authentication and future topology must
+still be verified. ssl=false is a measured local-lab condition, not a production
+DB-transport guarantee. Host memory headroom and version pinning from M1-05a remain.
+
+Next proposed M1-05c: prepare backend image and configurable bind address, keeping
+Windows default127.0.0.1 while using0.0.0.0 only inside container; run one bounded
+container with DB_HOST=host.docker.internal/5432 and verify health/course reads.
+No cluster creation in that slice. Choose compatible/pinned Node image based on
+official support/runtime compatibility; do not infer an image version from the old
+Docker-bundled kubectl. Before later K3s trial recheck RAM and pin k3d/K3s/client.
+
+Primary references: [Docker Desktop host-service alias](https://docs.docker.com/desktop/features/networking/networking-how-tos/#connect-a-container-to-a-service-on-the-host),
+[PostgreSQL client environment options](https://www.postgresql.org/docs/17/libpq-envars.html),
+[read-only transaction setting](https://www.postgresql.org/docs/17/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-READ-ONLY).
+
+### M1-05a — topology/resource/database preflight, 30/10/2026 (audit complete; deployment unverified)
+
+The user authorized read-only investigation. No cluster/container was created,
+no Linux distribution installed, no app/DB/env/hosts/HBA/firewall setting changed,
+and no existing service stopped. Evidence snapshot (ignored, no credentials):
+`.local-backups/m105a-survey-20261030.json`. This section supersedes the earlier
+Compose-era topology below; it is a feasibility assessment, not deployment evidence.
+
+Measured now:
+
+- Windows11Pro,15.77GiB RAM,3.21–3.32GiB available; i5-11400H6cores/12threads.
+  C has18.15GiB free and D65.45GiB. Largest grouped working sets included Chrome
+  ~2719MiB, ChatGPT~1727MiB, Code~1515MiB, Postman~809MiB; shared pages mean
+  these sums are not additive private RAM. No apps were closed automatically.
+- Docker28.1.1/WSL2 currently running,12CPUs/8201146368bytes guest total memory;
+  guest MemAvailable7358868KiB must not be added to Windows available RAM or
+  interpreted as all physically committed/free host memory. No .wslconfig exists.
+  Only docker-desktop distro registered; no separate Ubuntu installation observed.
+  CIM reports HypervisorPresent=true but VirtualizationFirmwareEnabled=false;
+  running WSL2 verifies virtualization works, so do not infer BIOS needs changing.
+- Docker VHD on D is3.85GiB; one306.1MB image, stopped dacn2-postgres-1, retained
+ 73.04MB volume, no running containers. system df again showed negative image
+ reclaimable: anomaly recorded, not used to justify cleanup. No prune/delete.
+- kubectl1.32.2/Kustomize5.5.0; no current context or context names. k3d/k3s/kind/
+  minikube absent from PATH; no claim about every filesystem location/external
+  cluster. No Dockerfile or cluster manifests found. No API-server query performed.
+- Windows PostgreSQL17.8 (distinct from historical Docker17.11), service running,
+  loopback app login PASS. Loaded listen_addresses='*', port5432, ssl=off,
+  max_connections100, shared_buffers128MB. Actual listeners0.0.0.0 and[::]:5432.
+  Inspected installed data-directory pg_hba.conf has only loopback TCP sources
+  with scram-sha-256; pg_hba_file_rules/active firewall policy were not audited.
+  Bind-all alone does not prove an external client can authenticate.
+
+Network findings and limits:
+
+- From the existing docker-desktop distro, host.docker.internal resolves to an
+  address not assigned to Windows at this snapshot; one bounded TCP5432 probe
+  failed. A Windows probe to the same resolved address timed out; no further
+  probing of that unverified address was performed after the mismatch was found.
+- WSL default gateway172.20.48.1 is assigned to Windows vEthernet. A single2s
+  TCP5432 probe from the distro to this verified host address also failed. These
+  are preflight TCP failures, not PostgreSQL password/HBA failures or a proven
+  firewall root cause. No credentials sent by the probes.
+- Distro resolver/network is not the same as a Docker container or K3s Pod.
+  Container/Pod DNS, TCP and authenticated SELECT remain NOT_TESTED. Do not assume
+  a host alias or fixed WSL IP works in the Pod; addresses may change on restart.
+- Existing Windows backend binds127.0.0.1:3000. Inside a Pod that would prevent
+  Service/NodePort access; future container config must bind0.0.0.0 inside the Pod
+  while retaining loopback default for Windows. No source/env change made here.
+- Backend pool max10;5replicas could request up to50connections before other
+  clients/DACN1/test/admin usage. This arithmetic is not proof of enough DB capacity.
+
+Conditional proposal, not an installed/approved cluster:
+
+1. Keep Gateway/TLS/client observation on Windows, PostgreSQL on Windows, Colab for
+   training. Try k3d with one K3s server and no agent; optional no loadbalancer/
+   Traefik/ServiceLB if using direct NodePort mapping, to avoid unused components.
+   k3d still needs Docker: moving PostgreSQL native removed only its Docker dependency,
+   not the future cluster runtime. Do not put K3s inside the managed docker-desktop distro.
+2. Start with one backend Pod and a loopback-only published HTTP port to NodePort,
+   then point host Gateway to that port. No public/0.0.0.0 host publish. Keep K3s
+   embedded lab datastore; do not reuse DACN1/dacn2 as cluster control-plane datastore.
+3. Treat host.docker.internal as a candidate for Windows DB access; test from an
+   explicitly selected temporary container first, then from the actual Pod.
+   host.k3d.internal is another k3d alias, not proof it targets Windows rather than
+   the Docker VM. Record resolved addresses and actual server-observed source IP.
+4. Resolve DNS/TCP before changing authentication. If access changes are necessary,
+   propose only observed source range + dacn2 + dacn2_app, SCRAM and scoped network
+   access; no trust/all-database/all-interface allow rules. Preserve DACN1 and the
+   working Windows loopback setup. Secrets stay outside Git/logs. Current ssl=off
+   means no TLS guarantee for a future non-loopback DB link; scope that explicitly.
+5. kubectl1.32.2 cannot be presumed compatible with the chosen future API server.
+   Pin supported k3d/K3s/image/client versions and check ±1minor kubectl skew before
+   install; prefer a project-specific client over overwriting Docker's bundled one.
+6. Recheck host RAM after the user closes unneeded apps. Aim for ~5GiB available
+   before a short single-node trial as a conservative project gate, NOT a vendor
+   minimum or a measured requirement; this leaves headroom beyond the K3s baseline
+   and one Pod. With current~3.2GiB, full local AI/monitoring/generator/1–5Pod lab
+   feasibility is unproven. No cluster memory reservation or runtime limits chosen yet.
+
+If the user requires Docker Desktop to stay off, direct K3s on a new WSL Linux
+distribution or another controlled Linux lab is a separate topology choice, not
+a drop-in implementation or a proven RAM saving. Preserve the planned stack and
+academic scope; no automatic feature reduction.
+
+Next scope recommendation: M1-05b isolate container-to-Windows PostgreSQL
+DNS/TCP/authentication using a bounded disposable probe, after user scope choice.
+No cluster creation until that path and available RAM are understood. Later install
+must verify Ready/DB read-write/stop-recovery/cleanup before M1-05 DONE; one-Pod
+benchmark remains M1-06, not a guessed capacity value.
+
+Primary references checked30/10/2026: [K3s requirements](https://docs.k3s.io/installation/requirements)
+(Linux;2cores/2GB server baseline excludes workloads),
+[k3d architecture/options](https://k3d.io/stable/usage/commands/k3d_cluster_create/),
+[k3d host alias](https://k3d.io/stable/faq/faq/#how-to-access-services-like-a-database-running-on-my-docker-host-machine),
+[Docker host networking how-to](https://docs.docker.com/desktop/features/networking/networking-how-tos/),
+[PostgreSQL HBA](https://www.postgresql.org/docs/17/auth-pg-hba-conf.html),
+[kubectl skew policy](https://kubernetes.io/releases/version-skew-policy/).
+
+### M1-04 telemetry boundary — 2026-10-30 (implemented, locally verified)
+
+Use one JSON completion event per HTTP request and a Gateway-owned liveness endpoint
+at /gateway/health, keeping /health proxied to the workload. This distinguishes a
+live Gateway from a failed backend and prevents local probes becoming scaling input.
+Use direct TCP peer IP for the current loopback topology; ignore caller-supplied
+forwarding headers and rebuild upstream XFF from the actual peer. Introduce trusted
+proxy identity only with a separate topology/authorization decision. Request IDs
+are Gateway-generated and correlation-only. Use existing console logging without
+new services/queues/client state; synchronous output may block and has no durability
+or throughput guarantee. Canonical schema, privacy bounds and verification criteria
+are in docs/API_CONTRACT.md; definitions in docs/FEATURE_SPEC.md. M1-04b implemented
+the boundary in telemetry.go/main.go; regression/race tests and compiled lab smoke
+passed, with evidence in docs/PROGRESS.md. Window/ML/scaling contracts remain separate.
 
 ### Local DB hosting override — 2026-10-30 (verified)
 
