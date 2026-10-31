@@ -6,6 +6,45 @@ the new source; execution evidence and scope limits are at the end.
 
 ## Boundary and identity
 
+### UI-03b direct browser addition (2026-10-31)
+
+User authorized minimal Gateway CORS and fingerprint correlation changes. Existing
+backend routes/business logic remain unchanged. gateway_request schema_version1
+adds `protocol` (HTTP/1.0,HTTP/1.1,HTTP/2.0 or unknown), now19fields. Earlier18field
+examples/verification below are historical. Consumers tolerate additive fields.
+
+New `gateway_tls` JSON schema1 has connection_id and ja4/ja4_r/ja4_o/ja4_ro;
+new `gateway_h2` JSON schema1 contains the existing H2 observation fields with
+connection_id. Both use the listener's same ID as request events; IDs scoped to
+Gateway process/session. TLS event is ClientHello observation, not authentication
+or proof handshake succeeded; H2 status and per-request protocol are separate.
+Legacy text diagnostics retained. No TLS key/header/body added to JSON events.
+
+Optional browser lab mode configured together by DACN2_BROWSER_ORIGIN (only
+http://127.0.0.1:5173), DACN2_BROWSER_TOKEN (64hex ephemeral session capability),
+DACN2_BROWSER_COURSE_IDS (1–10 owned positive IDs). All absent disables mode.
+Invalid/partial config fails without printing values. No production auth claim:
+local Windows user/processes remain trusted. Token is in local page metadata,
+never logs/argv/source; removed before forwarding to backend.
+
+In lab mode: direct browser GET /courses and POST /courses/:id/registrations
+require exact Origin and X-DACN2-Session. Writes only owned IDs, JSON studentCode,
+1KiB/4s read bound,30actions/10s and8inflight. No arbitrary routes/query targets.
+Only GET /health,/gateway/health allowed without Origin for supervisor checks.
+Preflight OPTIONS validates origin/method/header allowlist and returns204 locally,
+no upstream; not counted as workload completion. Lab refusals are local boundary
+errors, not bot-blocking policy evidence.400/403/404/405/413/415/429 retain no body
+input. CORS exposes X-Request-ID/X-DACN2-Connection-ID/X-DACN2-Protocol, no wildcard
+origin/credentials. Actual response includes connection ID and request protocol.
+The fixture/rate restrictions apply only in opt-in lab mode; native/K3s defaults
+preserve their previous behavior. More detail: DASHBOARD_DATA_MAPPING.md UI-03b.
+
+UI-03 adds a separate local development adapter, not new Gateway/backend routes.
+Its concrete endpoints, origin/header/target limits and SSE schema are in
+[DASHBOARD_DATA_MAPPING.md](DASHBOARD_DATA_MAPPING.md#ui-03-current-implementation-override--2026-10-31).
+Existing service contract below is unchanged. UI demo mode uses native NestJS with
+owned fixtures in dacn2_test; does not claim current K3s observation or browser JA4.
+
 The backend is an isolated lab workload. `studentCode` is a caller-supplied synthetic participant identifier, not a verified student identity. No real student data, account authentication, or production authorization is implemented. Bind the local server to loopback. Before networked deployment, explicitly design trusted identity/authorization and network access controls; gateway bot detection is not authentication.
 
 ## Read operations

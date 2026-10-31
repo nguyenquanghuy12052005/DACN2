@@ -7,6 +7,82 @@ cluster stopped, lab resources retained. No production deployment configured.
 
 ## Backend container smoke
 
+### UI-03 — interactive live dashboard (native test session)
+
+UI-03b current: the same command below now uses direct Chrome HTTPS, not Vite API
+proxy. Normal startup automatically opens a dedicated Chrome lab window with
+two tabs. Use THIS window so the existing self-signed lab certificate's key is
+allowlisted only in that session profile. No system certificate-store change.
+Do not use a global --ignore-certificate-errors flag or disable browser security.
+Runner checks certificate expiry/SAN and refuses an invalid certificate. Existing
+certificate/key files are preserved; renewal is separate if required.
+
+Data path: Chrome→https://127.0.0.1:18444→NestJS13001→dacn2_test;
+dashboard5173 only receives logs via SSE. Expected registration result includes
+HTTP201, request ID, connection ID and HTTP/2.0. Journal connection column and
+fingerprint tab use the same ID. HTTP/2/Akamai missing observations stay explicit.
+No proxy JA4 attribution. K3s/AI/scaling remain outside this lightweight session.
+
+For QA without a visible window: `node scripts/dashboard-live.cjs --no-browser`,
+then dashboard/ `npm run test:live` launches pinned headless Chrome. Stop and wait
+Cleanup:true afterward. `node scripts/dashboard-live.cjs stop` closes the lab's
+owned Chrome/services and fixture rows; main Chrome windows are not adopted.
+
+From project root, Windows PostgreSQL running and dashboard/backend dependencies
+installed, Go available:
+
+```powershell
+Set-Location D:\DACN2
+node scripts/dashboard-live.cjs
+```
+
+If static Vite5173 is running in your terminal, Ctrl+C there first. The runner
+refuses busy5173/13001/18444 and existing session locks. It does not stop unrelated
+processes. Open http://127.0.0.1:5173/demo and /dashboard in separate tabs. Live
+default is only enabled by this runner. Select a real fixture, enter synthetic
+code, Register; see HTTP201/ID/seats. Reuse same code/course for409; third course
+has one seat for full-capacity demo. Journal and fingerprints are real source data.
+
+Stop using Ctrl+C in the owning terminal or from another terminal:
+
+```powershell
+node scripts/dashboard-live.cjs stop
+```
+
+Wait for `Cleanup: true` and result.json in .local-backups/ui-live/<session>.
+This stops owned services and removes owned test fixture rows, preserves demo DB
+and other test rows; sequences advance. No Docker/K3s required; backend is native,
+not a Pod. Data path: Chrome→HTTPS Gateway18444→NestJS13001→dacn2_test.
+JA4 is observed from direct Chrome connection. No AI/blocking/scaling/load starts.
+Closed browser tabs alone do not stop services; use explicit stop.
+If force-killed/power loss leaves a lock, don't delete/adopt it blindly: inspect
+the session result/fixture IDs and confirm owned processes are gone before cleanup.
+
+Checks from dashboard/: npm run build; npm run lint; npm test;
+npm run test:adapter. `npm run test:e2e` owns a static Vite5173, so stop live first.
+`npm run test:live` requires a newly started clean live session and writes only its
+fixtures; stop afterward to clean. The full-course case consumes one test seat.
+
+### UI-01 — static frontend preview
+
+For the UI-01 frontend alone, no lab/database startup is needed:
+
+```powershell
+Set-Location D:\DACN2\dashboard
+# First installation / clean checkout only:
+npm ci
+npm run dev
+```
+
+Open http://127.0.0.1:5173/dashboard, /demo or /dashboard/simulation.
+Ctrl+C stops frontend. `npm run preview` serves built output on loopback4173.
+Static Mock Design fixtures only; Live shows unavailable. Form preview sends no
+HTTP registration, Start/Stop are disabled. This is not the M1 integration demo.
+Checks: npm run lint; npm run build; npm test; npm run test:e2e (installed Chrome).
+Full details and limitations: [dashboard README](../dashboard/README.md).
+
+### Backend container procedure
+
 Prerequisites: Docker Desktop Linux engine running, existing Windows PostgreSQL
 on 5432, restored `dacn2` schema and non-admin application login in ignored
 `backend/.env`. No migration/bootstrap needed on this machine. Build needs registry
@@ -182,7 +258,7 @@ docker ps -a --filter label=k3d.cluster=dacn2-m105e
 ```
 
 Expect0/1serversrunning; server and tools exited. To repeat a short check,
-first close unneeded apps yourself and have≥5GiBfree. Use explicit project
+first close unneeded apps yourself and have≥3GiBfree. Use explicit project
 tools/config; preserve Docker's older kubectl and default context.
 
 ```powershell
@@ -191,7 +267,7 @@ $k3dTool = '.\.local-backups\tools\k3d-v5.9.0.exe'
 $kubectlTool = '.\.local-backups\tools\kubectl-v1.35.9.exe'
 $trialKubeconfig = '.\.local-backups\m105e\1793364531571-resume-1793364615141\kubeconfig.yaml'
 $freeGiB = (Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB
-if ($freeGiB -lt 5) { throw 'Close unneeded apps and recheck RAM before trial' }
+if ($freeGiB -lt 3) { throw 'Close unneeded apps and recheck RAM before trial (3 GiB startup reserve)' }
 try {
   & $k3dTool cluster start dacn2-m105e --timeout 120s --wait
   if ($LASTEXITCODE -ne 0) { throw 'Cluster start failed' }
@@ -274,7 +350,7 @@ strategy avoids an extra surge Pod at the cost of rollout downtime. Existing
 `/health` only reports HTTP process liveness; database reads are checked separately.
 See API_CONTRACT for the lab trust boundary and Secret/probe semantics.
 
-From `D:\DACN2`, Docker/WindowsPG running and≥5GiBhostfree before a stopped-cluster
+From `D:\DACN2`, Docker/WindowsPG running and≥3GiBhostfree before a stopped-cluster
 start, use the project-local tools/private kubeconfig already set up above:
 
 ```powershell
@@ -325,7 +401,13 @@ M1-FIX01 (2026-10-30): integration now preserves the failing backend JSON report
 in `backendFailure` and readable `error`: original reason, `availableRamGiB` when
 measured, child exit code and child `evidencePath`. A4.52GiBpreflight refusal
 reports that measured RAM and exact backend evidence instead of only
-`node.exe exit=1`. The5GiBgate and startup/cleanup behavior are unchanged.
+`node.exe exit=1`. That historical run used the original 5GiB gate.
+M1-RAM01 (2026-10-31), authorized by the user, lowers the active backend-lab
+startup reserve to 3GiB (also used by integration/benchmark through this helper).
+This remains an experimental reserve, not a measured minimum or a guarantee that
+all workloads fit. The runtime stop below1GiB, resource caps and cleanup remain.
+Historical trial/probe results and local-only probe helpers retain their original
+5GiB conditions; use scripts/m1-integration.cjs for the current demo.
 Malformed/missing reports retain exit status without inventing RAM or dumping
 arbitrary stdout/stderr. Plaintext/base64 credentials are redacted in failures.
 

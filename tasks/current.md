@@ -1,9 +1,13 @@
 # Current milestone
 
-Updated: 2026-10-30 (Asia/Bangkok).
+Updated: 2026-10-31 (Asia/Bangkok).
+Stop checkpoint (user request, 2026-10-31): UI-03b manual user demo PASS: registration201/request21110074ce07868d4cf1f0e0ef2330f7-18, connection3/HTTP2.0 correlated with JA4 and H2/Akamai in journal/fingerprint UI. Real writes use per-session fixtures in dacn2_test; graceful cleanup removes owned fixtures/registrations, so DEMO001 can register against new course IDs next run. Persistent demo registration storage and training-data collection are not implemented. No session.lock found at checkpoint; host listeners not inspected. Docs-only update, no new tests/runtime/code changes or stage/commit/push. Stop here; next implementation task requires user scope choice. UI-02/K3s UI integration/M2 remain pending.
+Current objective: UI-03b direct Chrome→HTTPS Gateway COMPLETE. Actual HTTP/2 registration and correlated JA4/H2/request proven; native test DB session only. All QA sessions stopped/cleaned for user to self-run. UI-02 animations and K3s UI integration remain pending; M2 not started.
+M1-RAM01: user-authorized active lab startup reserve lowered 5→3 GiB in backend-lab (integration/benchmark inherit it). Runtime emergency stop <1 GiB and quotas unchanged; lower-RAM runtime not yet verified. Historical measurements remain unchanged.
+Cleanup checkpoint 2026-10-31: CLEAN-01 removed only disposable local artifacts (62,519 files / 997.66 MiB); source, active dependencies, secrets/config, DB backups and M1 evidence/runtime prerequisites retained. Manifest: .local-backups/cleanup-20261031/result.json. M1 status unchanged; M2 not started.
 Phase: M1 COMPLETE in controlled local lab scope; M2 not started. Hosted M0 CI evidence and academic acceptance remain pending.
 Task type: M1-FIX01 complete and user-run M1 integration PASS confirmed (2026-10-30). Evidence .local-backups/m105h/1793369445009/result.json:83.996s,19HTTP1+1H2=20events, registration/races/recovery/cleanup PASS, demo/test hashes unchanged, backend restored dacn2/replicas1 and cluster stopped. This turn only read evidence/update checkpoint; no code/runtime/tests rerun. Earlier RAM-refused manual attempts are historical.
-Stop checkpoint: preserve all local modified/untracked work, no commit/push/stage/reset/clean. Own Gateway/guard stopped; dacn2-m105e STOPPED with backendDeployment1replica/Service/privateSecret retained. DB_NAME restored dacn2; testfixture rows deleted, demo5/3/test5/0 unchanged (test sequences advanced). Next proposed M2-01 define/test12features; describe purpose/scope and wait for “bạn làm”/“tôi làm” before starting. Demo/test/stop commands in DEPLOYMENT.md.
+Stop checkpoint: UI-03b QA stopped, user self-runs node scripts/dashboard-live.cjs; automatically opens dedicated pinned Chrome lab window. Own Gateway18444/backend13001/Vite5173 and test fixtures; stop command cleans. Evidence .local-backups/ui-live/1793443487111/direct-proof.json and GUI1793443711377/result.json cleanup:true. Gateway opt-in boundary/TLS event/protocol changed with explicit user authorization; Backend/AI/env untouched. Preserve local changes/no commit/push, no cluster/load actions.
 Latest M1 closure (2026-10-30): Gateway→Pod→WindowsPG HTTPS/H2read/write-testDB/races/recovery PASS; latest .local-backups/m105h/1793367774888/result.json,20events exact19HTTP1+1H2. DNS coldstart EAI_AGAIN fixed by bounded initDNSwait,0restart assertions retained. Controlled benchmark .local-backups/m106/1793367470786/result.json/summary.csv/environment.json:400RPS offered bothtargets, four15s validations6000HTTP200each,0errors/shed; direct399.64–399.83/p953.29–3.37ms, Gateway399.97–399.99/p953.94–4.37ms. C_work319=floor(.8×minimumvalidationgoodput),20%headroomchoice, NOTmaximum; saturation not reached400cap. OnePod500m/192Mi/Node24.22.2/PG17.8/5courses/HTTP1keepalive, activewindow128.0s,total157.4s; peakgenerator83.61MiB, RAMsamples≥5.80GiB.15946Gatewayevents reconcile dispatches/200. BackendnofixESLint/build/8unit/9E2E and Gofmt/vet/fulltests/race/buildPASS. Script syntax/manifest serverdryrun/securityscope review/cleanup verified. No model/dataset/production/full5Podresource claim; no app/user data invitations or commit/push.
 Latest M1-05f (2026-10-30): actual Pod DNS/TCP5432/SASL10 SCRAM-SHA-256/passwordlogin/read-only SELECT bothWindowsDB PASS. Cachedimage import initially failed missingindexblob; cachedamd64 export+archiveimport succeeded, no pull/versionchange. Podnonroot65534/readonly/dropcaps/noSAToken,64Mi/250m/300sdeadline; run28.299s. PodIP10.42.0.20; WindowsPG17.8 seesclient127.0.0.1/sslfalse/read_onlyon. Demo5courses/3registrations,test5/0 and rowhash before/after match. Password execstdinonly, noSecret/specenv/file/argv/output. OwnPodUID/label checked/deleted; clusterstopped/defaultconfigunchanged; initialRAM6.0527/final5.5933GiB. Evidence .local-backups/m105f/1793365214835-bc3ea7/result.json; helper probe.cjs in parent; ARCHITECTURE/DEPLOYMENT details. No HBA/firewall/app/env/DBwrites/Gatewaychange/tests/commit/push. BackendPod deployment/NodePort APIs still missing.
 Latest M1-05e (2026-10-30): tool SHA256/version and image digest PASS. User closed apps inclVSCode; RAMgate≥5 preserved (earlyrefusal4.9358, retainedcreate6.3876GiB). k3d5.9.0/K3s1.35.9+k3s1/kubectl1.35.9; one server3GiBcap, zeroagents/noLB/Traefik/ServiceLB, standardtoolshelper. APIreadyzOK/nodeReady/system3PodsReady afterwarmup and stop/start; pressureFalse/OOMfalse/restarts0. Bindings127.0.0.1:16443→6443 and13000→30080; no backendservice. Retainedtrial+supplement143.532s; sampleRAMminimum5.6793GiB, final5.6848. Finalowncontainersstopped/defaultkubeconfigunchanged. Evidence .local-backups/m105e/1793364531571/result.json and1793364531571-resume-1793364615141/result.json; tools under .local-backups/tools, kubeconfigACLrestricted/ignored. Corrected directport suffix and helper's tools/APIkey assumptions; ownfailedcluster removed before successfulrerun. No app/DB/env changes/tests or commit/push. Procedure DEPLOYMENT.md.
@@ -30,6 +34,70 @@ Handoff: M1-01..06 local lab complete, evidence above/PROGRESS. Retained cluster
 Plan: [DACN2_PROJECT_MASTER_PLAN.md](../DACN2_PROJECT_MASTER_PLAN.md).
 
 This is the canonical execution tracker. Master-plan checklists describe planned work, not independent completion evidence. docs/PROGRESS.md is the latest session handoff, not another backlog.
+
+## Dashboard UI work
+
+User request 2026-10-31 authorized UI-00, then “ok làm đi” authorized UI-01. Source design is existing untracked
+docs/DACN2_GLASS_SECURITY_DASHBOARD_SPEC.md (preserved); requested filename absent,
+so docs/DASHBOARD_DESIGN_SPEC.md links to it. No separate dashboard backlog.
+
+- [x] UI-00 — inventory frontend/API/telemetry, reconcile architecture and data
+  provenance, document missing interfaces and implementation sequence. Outputs:
+  docs/ARCHITECTURE.md UI-00 note, docs/DASHBOARD_DATA_MAPPING.md, entry link,
+  PROGRESS/current checkpoint. Source/docs audit and recorded M1 PASS reviewed;
+  no application modification, package installation, deployment or generated load.
+- [x] UI-01 — dashboard/ React/Vite/TS project, compatible pinned
+  dependencies, glass tokens/layout and three static routes. Obvious Mock Design
+  label, loading/empty/unavailable/offline, light/dark/reduced motion. No connected
+  Start/load control. Gate: build/lint/unit checks and screenshots1920×1080,
+  1366×768,390×844, keyboard/contrast review. Files restricted to dashboard/,
+  relevant docs and a focused CI addition if selected; service edits require scope.
+  Evidence: build/typecheck/lint PASS;4 RTL tests PASS;4 Playwright tests PASS,
+ 9 screenshots in ignored dashboard/test-results/ (3 routes ×3 viewports), axe
+  light all routes +dark overview no violations; keyboard/theme/reduced-motion/
+  no-backend-API-requests and Live fixture hiding checked. npm audit0 after patched
+  router/Vitest/tooling +minimatch11.0.1 override; Node20.20.2. Static design only,
+  not real registration, streaming, bot generation or policy. No new CI job.
+  UI-01a checkpoint (2026-10-31): all visible labels/ARIA/fixtures localized,
+  Segoe UI/Arial font with larger body/control text, compact overview tabs
+  (Sơ đồ/Lưu lượng/Nhật ký/Dấu vân tay), collapsible help and desktop course rows.
+  Build/typecheck/lint/5 RTL/4 Chrome tests PASS,9 refreshed screenshots and axe
+  checks PASS. Desktop default page heights:1920×1080 all1080px (no scroll),
+  1366×768 overview816/demo828/simulation837px (48–69px scroll). Mobile keeps
+  natural vertical flow1512/1625/1801px; no forced clipping. UI-02 still not started.
+- [ ] UI-02 — bounded animated topology, solid data/dashed control edges, exact
+  source labels, max40/15 pulses, pause/reduced motion. Gate: deterministic replay,
+  sampled semantics, bounded DOM/buffers and performance evidence.
+- [ ] UI-03 — separately review live browser CORS/TLS and telemetry transport;
+  UI-03b direct-browser slice COMPLETE: optional Gateway origin/session/fixture/
+  size/rate guards, fresh Chrome profile with scoped SPKI certificate exception,
+  actual HTTP2/CDP direct URLs, POST201/409 and same-connectionJA4/H2/Akamai proof.
+  Go test/vet/race, frontend build/lint/5RTL/4adapter/4staticChrome +realChromePASS;
+  GUI auto-launch also verified, all sessions cleaned. Existing cert/key preserved,
+  Windows/mainChrome trust unchanged. More resilience/K3s integration still pending.
+  Native-proxy slice COMPLETE(2026-10-31): optional local adapter +owned native
+  supervisor, real API via Gateway, SSE/health/events/JA4 and browser form.
+  Native scope documented in DATA_MAPPING/ARCHITECTURE/DEPLOYMENT. Tested actual
+  Chrome201/duplicate409/full409/request-ID/journal/privacy/sanitized fingerprint,
+  graceful stop+hash cleanup PASS, screenshot evidence retained. Whole UI-03 gate
+  for K3s and expanded resilience remains pending (direct browser completed above).
+  read-only adapter proposal, no invented server endpoints. Gate: verified
+  Gateway path, health/registration/error responses, source reconciliation,
+  dedup/restart/gap/late/out-of-order/disconnect tests. Do not infer admission or
+  fingerprint identity beyond existing contracts; service changes need approval.
+- [ ] UI-04 — only after M2/lab controller prerequisites: authenticated local
+  bounded scenario supervisor, allowlist/singleton/kill-switch/cleanup. Gate:
+  target/cap enforcement, timeout/disconnect/Stop verification and actual evidence;
+  no claim bot blocking until M4 enforcement exists, no scaling until M5 evidence.
+- [ ] UI-05 — sanitized replay,5-minute reproducible demo,15min memory/handler
+  test, responsive/browser/accessibility/security checks. Gate: build/lint/tests/
+  Playwright smoke and evidence; unavailable capabilities stay explicit.
+
+Open dependencies: frontend static only; no stream/controller exists; no CORS/browser trust
+verification; JA4 text lacks connection correlation; completion ≠ arrival/admission;
+real browser client identity through proxy unresolved; isolated interactive write
+fixture lifecycle pending; AI/policy/autoscale/Prometheus/Grafana missing. Versions,
+adapter hosting must be verified before UI-03. UI port5173/preview4173 loopback only.
 
 ## Documentation work completed
 

@@ -100,7 +100,8 @@ async function check() {
     result.configBefore = configHash(); result.initialServer = server();
     if (action === 'stop') { sync(k3d, ['cluster', 'stop', cluster], 45000); result.pass = true; return; }
     result.freeBeforeGiB = ram();
-    if (!result.initialServer.running) assert.ok(result.freeBeforeGiB >= 5, 'Fresh RAM below5GiB; cluster not started');
+    // Trial startup reserve, not a measured minimum; retain the <1 GiB runtime stop.
+    if (!result.initialServer.running) assert.ok(result.freeBeforeGiB >= 3, 'Fresh RAM below3GiB; cluster not started');
     result.before = await snapshot();
     monitor = setInterval(() => { try { const free = ram(); result.memory.push({ time: new Date().toISOString(), freeGiB: free }); if (free < 1) { emergency = 'RAM below1GiB'; active?.kill(); } } catch { emergency = 'RAM monitor failed'; active?.kill(); } }, 10000);
     touched = true;

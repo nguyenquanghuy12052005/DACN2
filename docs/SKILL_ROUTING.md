@@ -17,6 +17,10 @@ Source: [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills). T
 
 ## Loading protocol and document mapping
 
+UI-01 (2026-10-31) reused incremental-implementation at pinned eb07f19f52c2669f2364897aaa293e2aaddd7b1c;
+raw skill retrieval succeeded via HTTPS shell after web cache miss. Applied scoped
+frontend verification; project instructions override skill automatic commits.
+
 1. Read tasks/current.md, relevant master-plan sections, and CONSTRAINTS.md. Identify task type, acceptance criteria, and verification before coding.
 2. Normally load 1–3 workflows per task, sequentially by phase. Routes below are alternatives/phases, not a requirement to load every listed workflow together.
 3. Project/user instructions govern scope and permission. Skill examples do not add approval gates to already authorized work or require extra infrastructure.

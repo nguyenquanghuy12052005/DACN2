@@ -28,9 +28,20 @@ type h2ObservationResult struct {
 }
 
 type h2ObservationManager struct {
-	slots  chan struct{}
-	nextID atomic.Uint64
-	report func(h2ObservationResult)
+	slots     chan struct{}
+	nextID    atomic.Uint64
+	report    func(h2ObservationResult)
+	reportTLS func(tlsFingerprintEvent)
+}
+
+type tlsFingerprintEvent struct {
+	SchemaVersion  int    `json:"schema_version"`
+	Event          string `json:"event"`
+	ConnectionID   uint64 `json:"connection_id"`
+	JA4            string `json:"ja4"`
+	JA4Raw         string `json:"ja4_r"`
+	JA4Original    string `json:"ja4_o"`
+	JA4RawOriginal string `json:"ja4_ro"`
 }
 
 func newH2ObservationManager(report func(h2ObservationResult)) *h2ObservationManager {
@@ -48,7 +59,20 @@ func (l *observedTLSListener) Accept() (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &observedTLSConn{Conn: tls.Server(c, l.config), manager: l.manager, id: l.manager.nextID.Add(1)}, nil
+	id := l.manager.nextID.Add(1)
+	config := l.config.Clone()
+	original := config.GetConfigForClient
+	config.GetConfigForClient = func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
+		if l.manager.reportTLS != nil {
+			f := ja4Variants(hello)
+			l.manager.reportTLS(tlsFingerprintEvent{SchemaVersion: 1, Event: "gateway_tls", ConnectionID: id, JA4: f.JA4, JA4Raw: f.Raw, JA4Original: f.Original, JA4RawOriginal: f.RawOriginal})
+		}
+		if original != nil {
+			return original(hello)
+		}
+		return nil, nil
+	}
+	return &observedTLSConn{Conn: tls.Server(c, config), manager: l.manager, id: id}, nil
 }
 
 // Embed TLS methods for Go 1.27's net/http detection. Parser ownership is

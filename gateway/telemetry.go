@@ -37,6 +37,7 @@ type gatewayRequestEvent struct {
 	ClientIP          *string   `json:"client_ip"`
 	ClientIPSource    string    `json:"client_ip_source"`
 	Method            string    `json:"method"`
+	Protocol          string    `json:"protocol"`
 	Route             string    `json:"route"`
 	RouteKind         string    `json:"route_kind"`
 	UpstreamAttempted bool      `json:"upstream_attempted"`
@@ -207,6 +208,11 @@ func (g *gatewayTelemetry) observe(next http.Handler) http.Handler {
 		start := time.Now()
 		id := g.prefix + "-" + strconv.FormatUint(g.next.Add(1), 10)
 		e := gatewayRequestEvent{SchemaVersion: 1, Event: "gateway_request", RequestID: id, StartedAt: start.UTC(), ClientIP: peerIP(r.RemoteAddr), ClientIPSource: "unavailable", Method: requestMethod(r.Method), Route: requestRoute(r.URL.Path), RouteKind: "upstream", Outcome: "upstream_response"}
+		if r.Proto == "HTTP/1.1" || r.Proto == "HTTP/1.0" || r.Proto == "HTTP/2.0" {
+			e.Protocol = r.Proto
+		} else {
+			e.Protocol = "unknown"
+		}
 		if e.ClientIP != nil {
 			e.ClientIPSource = "tcp_peer"
 		}

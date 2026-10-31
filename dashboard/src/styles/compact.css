@@ -1,0 +1,1095 @@
+/* Vietnamese typography and compact layout. Never clip content to fit a viewport. */
+:root {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+.live-fingerprints p {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.live-fingerprints code {
+  display: block;
+  padding: 8px 0;
+  overflow-wrap: anywhere;
+}
+.metric-value:has(small:empty) {
+  overflow-wrap: anywhere;
+}
+.metric-value {
+  overflow-wrap: anywhere;
+}
+.app-frame {
+  padding: 14px 20px;
+  overflow: clip;
+}
+.ambient-orb {
+  position: fixed;
+}
+.app-frame h1,
+.app-frame h2,
+.app-frame strong {
+  letter-spacing: -0.3px;
+}
+.app-frame h1 {
+  font-size: clamp(26px, 2vw, 34px);
+}
+.app-frame h2,
+.app-frame .section-title h2 {
+  font-size: 19px;
+}
+.app-frame p {
+  line-height: 1.5;
+}
+.app-frame .topbar {
+  min-height: 64px;
+  padding: 9px 18px;
+  border-radius: 20px;
+}
+.app-frame .brand {
+  font-size: 25px;
+}
+.app-frame .brand small {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.app-frame .brand-mark {
+  height: 40px;
+  width: 38px;
+}
+.app-frame .environment {
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+.app-frame .connection-status {
+  font-size: 13px;
+}
+.app-frame .workspace {
+  margin-top: 12px;
+  gap: 16px;
+  grid-template-columns: 190px minmax(0, 1fr);
+}
+.app-frame .sidebar {
+  top: 14px;
+  min-height: calc(100vh - 110px);
+  padding: 22px 10px 16px;
+}
+.app-frame .nav-caption {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  padding-left: 10px;
+}
+.app-frame .sidebar nav a {
+  padding: 12px 10px;
+  gap: 9px;
+  font-size: 15px;
+  white-space: normal;
+}
+.app-frame .nav-arrow {
+  display: none;
+}
+.app-frame .side-note strong {
+  font-size: 20px;
+}
+.app-frame .side-note p {
+  font-size: 13px;
+  max-width: none;
+}
+.app-frame .sidebar-footer {
+  font-size: 12px;
+  padding-inline: 4px;
+}
+.app-frame .source-banner {
+  min-height: 36px;
+  padding: 0 0 10px;
+  font-size: 13px;
+}
+.app-frame .source-banner > div {
+  gap: 10px;
+}
+.app-frame .source-select {
+  gap: 8px;
+  font-size: 13px;
+}
+.app-frame .source-select select {
+  font-size: 13px;
+  width: 187px;
+  padding: 6px 8px;
+}
+.app-frame .badge {
+  font-size: 11px;
+  padding: 4px 7px;
+  letter-spacing: 0;
+}
+.app-frame .page-heading {
+  margin: 0 0 14px;
+  align-items: center;
+  gap: 14px;
+}
+.app-frame .page-heading .eyebrow {
+  display: none;
+}
+.app-frame .page-heading > div > p:last-child {
+  font-size: 14px;
+  margin-top: 5px;
+  max-width: none;
+}
+.app-frame .button {
+  padding: 10px 13px;
+  font-size: 14px;
+  white-space: normal;
+  min-height: 40px;
+}
+.app-frame .panel {
+  padding: 16px 18px;
+  border-radius: 20px;
+}
+.app-frame .section-title {
+  margin-bottom: 12px;
+}
+.app-frame .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  margin-bottom: 7px;
+}
+.app-frame .section-title .eyebrow {
+  display: none;
+}
+.app-frame .metrics-strip {
+  margin-bottom: 14px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  padding: 12px 4px;
+}
+.app-frame .metric {
+  padding: 0 12px;
+}
+.app-frame .metric-name {
+  font-size: 13px;
+  white-space: normal;
+  line-height: 1.3;
+  min-height: 34px;
+  align-items: flex-start;
+}
+.app-frame .metric-name svg {
+  display: none;
+}
+.app-frame .metric-value {
+  font-size: 29px;
+  margin: 4px 0;
+  line-height: 1.15;
+}
+.app-frame .metric-value small {
+  font-size: 13px;
+}
+.app-frame .metric-foot {
+  font-size: 12px;
+  line-height: 1.3;
+}
+.app-frame .overview-layout {
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 14px;
+}
+.app-frame .overview-main,
+.app-frame .overview-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.app-frame .system-panel {
+  padding-bottom: 12px;
+}
+.app-frame .topology {
+  padding-top: 0;
+}
+.app-frame .topology-meta {
+  font-size: 12px;
+  gap: 14px;
+}
+.app-frame .topology-meta > .badge {
+  font-size: 10px;
+}
+.app-frame .flow-row {
+  padding: 24px 0 0;
+  min-height: 125px;
+}
+.app-frame .flow-node {
+  min-width: 76px;
+}
+.app-frame .flow-node strong {
+  font-size: 14px;
+}
+.app-frame .flow-node small {
+  font-size: 11px;
+}
+.app-frame .gateway-node {
+  min-width: 112px;
+}
+.app-frame .gateway-node strong {
+  font-size: 16px;
+}
+.app-frame .node-icon {
+  width: 43px;
+  height: 43px;
+  margin-bottom: 7px;
+  border-radius: 14px;
+}
+.app-frame .gateway-node .node-icon {
+  width: 59px;
+  height: 59px;
+  border-radius: 19px;
+  border-width: 3px;
+}
+.app-frame .node-tag {
+  top: -7px;
+  font-size: 10px;
+}
+.app-frame .flow-link {
+  margin: 0 7px 25px;
+}
+.app-frame .flow-link span {
+  font-size: 11px;
+  top: -20px;
+}
+.app-frame .control-row {
+  margin-top: 0;
+  margin-left: -6%;
+}
+.app-frame .control-link {
+  height: 13px;
+}
+.app-frame .control-node {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.app-frame .control-node small {
+  font-size: 11px;
+}
+.app-frame .control-node .badge {
+  font-size: 10px;
+}
+.app-frame .topology-foot {
+  margin-top: 10px;
+  padding-top: 8px;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.app-frame .insight-card {
+  background: linear-gradient(145deg, #f0e2c875, var(--glass));
+}
+.app-frame .insight-card .section-title {
+  margin-bottom: 12px;
+}
+.app-frame .insight-card h2 {
+  font-size: 19px;
+}
+.app-frame .ai-placeholder {
+  margin: 0 0 10px;
+  border: 0;
+  padding: 0;
+  font-size: 14px;
+}
+.app-frame .insight-card p {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.app-frame .insight-card small {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.app-frame .layer-list li {
+  font-size: 13px;
+  padding: 11px 0;
+  flex-wrap: wrap;
+}
+.app-frame .layer-list .badge {
+  font-size: 11px;
+}
+.app-frame .quiet-note {
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+.app-frame .detail-panel {
+  min-width: 0;
+}
+.detail-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.detail-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.detail-tabs button {
+  background: transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  padding: 8px 10px;
+  color: var(--muted);
+}
+.detail-tabs button[aria-selected='true'] {
+  background: var(--soft-green);
+  color: var(--green);
+  font-weight: 600;
+}
+.preview-select {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+}
+.preview-select select {
+  font-size: 13px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--input);
+  color: var(--text);
+  max-width: 125px;
+}
+.detail-content {
+  height: 165px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #9ba99b transparent;
+  border-radius: 8px;
+}
+.app-frame .chart-legend {
+  font-size: 12px;
+  margin-bottom: 8px;
+  gap: 10px;
+}
+.app-frame .chart-legend small {
+  font-size: 11px;
+}
+.app-frame .chart-body {
+  height: 91px;
+  gap: 12px;
+}
+.app-frame .chart-scale {
+  font-size: 11px;
+}
+.app-frame .chart-times {
+  font-size: 11px;
+  margin-top: 6px;
+}
+.app-frame .chart-note {
+  font-size: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  line-height: 1.4;
+}
+.app-frame .empty-state {
+  min-height: 145px;
+  padding: 12px;
+  gap: 9px;
+}
+.app-frame .empty-state strong {
+  font-size: 16px;
+}
+.app-frame .empty-state p {
+  font-size: 14px;
+  max-width: 440px;
+}
+.app-frame .loading-state {
+  min-height: 145px;
+  padding: 20px;
+  font-size: 14px;
+}
+.app-frame th {
+  font-size: 12px;
+  padding-bottom: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.app-frame td {
+  font-size: 13px;
+  padding: 11px 10px 11px 0;
+}
+.app-frame td code,
+.app-frame code,
+.app-frame .mono {
+  font-size: 12px;
+}
+.app-frame .method {
+  font-size: 11px;
+}
+.app-frame .http-code,
+.app-frame .event-result {
+  font-size: 12px;
+}
+.app-frame .page-footer {
+  padding: 10px 2px;
+  margin-top: 10px;
+  font-size: 11px;
+}
+.app-frame .settings-popover strong {
+  font-size: 16px;
+}
+.app-frame .settings-popover p {
+  font-size: 13px;
+}
+.app-frame .check-label {
+  font-size: 14px;
+}
+.app-frame .demo-layout,
+.app-frame .simulation-layout {
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 16px;
+}
+.app-frame .course-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+.app-frame .course-card {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 150px;
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 5px;
+  padding: 16px;
+}
+.app-frame .course-top {
+  margin: 0;
+  grid-row: 1/3;
+  gap: 12px;
+}
+.app-frame .course-code {
+  font-size: 14px;
+}
+.app-frame .course-card .eyebrow {
+  font-size: 11px;
+  margin: 0;
+}
+.app-frame .course-card > strong {
+  font-size: 21px;
+  margin: 0;
+  grid-column: 2;
+  grid-row: 2;
+}
+.app-frame .seat-line {
+  grid-column: 3;
+  grid-row: 1/3;
+  font-size: 13px;
+  margin: 0;
+}
+.app-frame .seat-track {
+  grid-column: 2/4;
+  margin: 8px 0 2px;
+}
+.app-frame .course-card small {
+  grid-column: 2/4;
+  font-size: 12px;
+}
+.app-frame .client-path {
+  padding: 13px 0;
+  font-size: 13px;
+}
+.app-frame .registration-panel > .card-icon,
+.app-frame .registration-panel > .eyebrow {
+  display: none;
+}
+.app-frame .registration-panel > h2 {
+  font-size: 22px;
+}
+.app-frame .registration-panel > p:not(.eyebrow) {
+  font-size: 14px;
+  margin-top: 9px;
+}
+.app-frame .registration-panel form {
+  margin-top: 15px;
+  gap: 8px;
+}
+.app-frame .registration-panel label,
+.app-frame .run-panel label {
+  font-size: 14px;
+  gap: 6px;
+}
+.app-frame input:not([type='checkbox'], [type='radio']) {
+  font-size: 14px;
+  padding: 10px;
+  min-height: 40px;
+}
+.app-frame .registration-panel form small {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.app-frame .request-preview {
+  margin-top: 12px;
+  padding: 12px;
+}
+.app-frame .request-preview strong {
+  font-size: 14px;
+}
+.app-frame .request-preview p {
+  font-size: 13px;
+}
+.app-frame .plain-notice {
+  margin-top: 14px;
+  padding: 13px 16px;
+}
+.app-frame .plain-notice strong {
+  font-size: 14px;
+}
+.app-frame .plain-notice p {
+  font-size: 13px;
+}
+.app-frame .scenario-grid {
+  margin-top: 16px;
+  gap: 12px;
+}
+.app-frame .scenario-card {
+  padding: 16px;
+  min-height: 170px;
+}
+.app-frame .scenario-top {
+  margin-bottom: 12px;
+}
+.app-frame .scenario-card > strong {
+  font-size: 20px;
+}
+.app-frame .scenario-card > p {
+  font-size: 14px;
+  margin: 8px 0 12px;
+  max-width: none;
+}
+.app-frame .scenario-card > .badge {
+  display: none;
+}
+.app-frame .inset p {
+  font-size: 13px;
+}
+.app-frame .run-panel {
+  gap: 12px;
+}
+.app-frame .session-status {
+  font-size: 14px;
+  padding: 6px 0;
+}
+.app-frame .simulation-bottom {
+  padding: 13px 16px;
+  margin-top: 14px;
+  gap: 14px;
+}
+.app-frame .simulation-bottom .eyebrow {
+  display: none;
+}
+.app-frame .simulation-bottom h2 {
+  font-size: 16px;
+}
+.app-frame .simulation-bottom p:last-child {
+  font-size: 13px;
+  margin-top: 5px;
+}
+.app-frame .simulation-bottom > .badge {
+  display: none;
+}
+.app-frame .simulation-bottom .card-icon {
+  width: 36px;
+  height: 36px;
+}
+
+@media (min-width: 1650px) {
+  .app-frame {
+    padding: 20px 30px;
+  }
+  .app-frame .workspace {
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 22px;
+  }
+  .app-frame .overview-layout {
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 18px;
+  }
+  .app-frame .overview-main,
+  .app-frame .overview-side {
+    gap: 18px;
+  }
+  .app-frame .panel {
+    padding: 22px;
+  }
+  .app-frame .flow-row {
+    min-height: 165px;
+    padding-top: 28px;
+  }
+  .app-frame .node-icon {
+    width: 55px;
+    height: 55px;
+  }
+  .app-frame .gateway-node .node-icon {
+    width: 72px;
+    height: 72px;
+  }
+  .app-frame .flow-node small {
+    font-size: 13px;
+  }
+  .app-frame .flow-node strong {
+    font-size: 16px;
+  }
+  .app-frame .metrics-strip {
+    padding-block: 16px;
+  }
+  .app-frame .metric-name {
+    font-size: 15px;
+  }
+  .detail-content {
+    height: 220px;
+  }
+  .app-frame .chart-body {
+    height: 140px;
+  }
+  .app-frame .course-card {
+    padding: 22px;
+  }
+  .app-frame .demo-layout,
+  .app-frame .simulation-layout {
+    grid-template-columns: minmax(0, 1fr) 400px;
+  }
+}
+@media (max-width: 1199px) {
+  .app-frame {
+    padding: 12px;
+  }
+  .app-frame .workspace {
+    grid-template-columns: 66px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .app-frame .sidebar nav a {
+    padding: 13px 8px;
+  }
+  .app-frame .source-banner > div > span:not(.badge) {
+    display: none;
+  }
+  .app-frame .overview-layout {
+    grid-template-columns: minmax(0, 1fr) 250px;
+  }
+  .detail-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .app-frame .course-card {
+    grid-template-columns: 95px minmax(0, 1fr);
+    gap: 8px 12px;
+  }
+  .app-frame .seat-line {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .app-frame .seat-track,
+  .app-frame .course-card small {
+    grid-column: 2;
+  }
+}
+@media (max-width: 959px) {
+  .app-frame .toolbar-middle {
+    display: none;
+  }
+  .app-frame .overview-layout {
+    grid-template-columns: 1fr;
+  }
+  .app-frame .overview-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .app-frame .metrics-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 0;
+  }
+  .app-frame .metric:nth-child(3) {
+    border: 0;
+  }
+  .detail-toolbar {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .detail-content {
+    height: 200px;
+  }
+  .app-frame .chart-body {
+    height: 120px;
+  }
+  .app-frame .demo-layout,
+  .app-frame .simulation-layout {
+    grid-template-columns: 1fr;
+  }
+  .app-frame .run-panel {
+    display: flex;
+  }
+}
+@media (max-width: 767px) {
+  .app-frame {
+    padding: 10px;
+  }
+  .app-frame .topbar {
+    min-height: 66px;
+    padding: 10px 12px;
+  }
+  .app-frame .brand small {
+    font-size: 9px;
+    letter-spacing: 0.2px;
+  }
+  .app-frame .brand {
+    font-size: 22px;
+  }
+  .app-frame .workspace {
+    display: block;
+    margin-top: 12px;
+  }
+  .app-frame .sidebar {
+    position: relative;
+    top: auto;
+    min-height: 0;
+    padding: 8px;
+  }
+  .app-frame .sidebar nav a {
+    padding: 12px;
+  }
+  .app-frame .source-banner {
+    margin-bottom: 6px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .app-frame .source-banner .badge {
+    font-size: 10px;
+  }
+  .app-frame .source-select {
+    font-size: 0;
+  }
+  .app-frame .source-select select {
+    width: 175px;
+    font-size: 13px;
+  }
+  .app-frame .page-heading {
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .app-frame .page-heading > div > p:last-child {
+    font-size: 14px;
+  }
+  .app-frame .page-heading .button {
+    font-size: 14px;
+    padding: 9px 12px;
+  }
+  .app-frame .panel {
+    padding: 16px;
+  }
+  .app-frame .overview-side {
+    grid-template-columns: 1fr;
+  }
+  .app-frame .metric {
+    padding: 0 8px;
+  }
+  .app-frame .metric-name {
+    font-size: 12px;
+    min-height: 34px;
+  }
+  .app-frame .metric-value {
+    font-size: 27px;
+  }
+  .app-frame .metric-foot {
+    font-size: 11px;
+  }
+  .app-frame .section-title h2 {
+    font-size: 18px;
+  }
+  .app-frame .system-panel .section-title .badge {
+    font-size: 10px;
+    padding: 4px 6px;
+  }
+  .app-frame .topology-meta {
+    flex-wrap: wrap;
+    font-size: 11px;
+    gap: 8px;
+  }
+  .app-frame .topology-meta > .badge {
+    display: none;
+  }
+  .app-frame .flow-row {
+    min-height: 145px;
+    padding-top: 28px;
+  }
+  .app-frame .flow-node {
+    min-width: 69px;
+  }
+  .app-frame .flow-node strong {
+    font-size: 13px;
+  }
+  .app-frame .flow-node small {
+    font-size: 10px;
+    max-width: 80px;
+    text-align: center;
+  }
+  .app-frame .gateway-node {
+    min-width: 95px;
+  }
+  .app-frame .node-tag {
+    font-size: 9px;
+  }
+  .app-frame .flow-link {
+    min-width: 6px;
+    margin-inline: 4px;
+  }
+  .app-frame .flow-link span {
+    font-size: 9px;
+  }
+  .app-frame .control-row {
+    margin-left: 0;
+  }
+  .app-frame .control-node .badge {
+    font-size: 9px;
+  }
+  .app-frame .topology-foot {
+    font-size: 11px;
+  }
+  .detail-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .detail-tabs {
+    flex-wrap: nowrap;
+    gap: 2px;
+  }
+  .detail-tabs button {
+    font-size: 13px;
+    padding: 8px 7px;
+    flex: 1;
+  }
+  .preview-select {
+    justify-content: space-between;
+  }
+  .detail-content {
+    height: 210px;
+  }
+  .app-frame .chart-legend {
+    font-size: 12px;
+    align-items: flex-start;
+  }
+  .app-frame .chart-legend small {
+    font-size: 10px;
+    max-width: 120px;
+  }
+  .app-frame .chart-note {
+    font-size: 12px;
+  }
+  .app-frame .course-card {
+    padding: 14px;
+    grid-template-columns: 1fr auto;
+  }
+  .app-frame .course-top {
+    grid-column: 1/-1;
+    grid-row: auto;
+    margin-bottom: 6px;
+  }
+  .app-frame .course-card .eyebrow {
+    grid-column: 1;
+  }
+  .app-frame .course-card > strong {
+    grid-column: 1/-1;
+    grid-row: auto;
+    font-size: 21px;
+  }
+  .app-frame .seat-line,
+  .app-frame .seat-track,
+  .app-frame .course-card small {
+    grid-column: 1/-1;
+    grid-row: auto;
+  }
+  .app-frame .seat-line {
+    margin-top: 4px;
+  }
+  .app-frame .client-path {
+    font-size: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 7px;
+  }
+  .app-frame .scenario-grid {
+    grid-template-columns: 1fr;
+  }
+  .app-frame .scenario-card {
+    min-height: 0;
+    padding: 18px;
+  }
+  .app-frame .scenario-card > strong {
+    font-size: 21px;
+  }
+  .app-frame .simulation-bottom {
+    align-items: flex-start;
+  }
+  .app-frame .page-footer {
+    font-size: 11px;
+  }
+}
+/* One primary observation panel: change tabs instead of scrolling past charts. */
+.app-frame .brand {
+  line-height: 1.1;
+}
+.app-frame .brand small {
+  line-height: 1.3;
+  margin-top: 4px;
+}
+.app-frame .detail-panel {
+  height: 100%;
+}
+.app-frame .detail-content {
+  height: 295px;
+}
+.app-frame .detail-toolbar {
+  flex-wrap: wrap;
+}
+.app-frame .detail-tabs button {
+  padding: 8px;
+}
+.app-frame .preview-select {
+  margin-left: auto;
+}
+.app-frame .insight-card .section-title {
+  margin-bottom: 10px;
+}
+.app-frame .layer-list li {
+  padding: 8px 0;
+}
+.app-frame .flow-link span {
+  white-space: nowrap;
+}
+.app-frame .metrics-strip {
+  padding-block: 10px;
+}
+.app-frame .metric-name {
+  min-height: 28px;
+}
+.app-frame .course-card {
+  padding: 12px 14px;
+}
+.app-frame .course-card .seat-track {
+  margin-top: 3px;
+}
+.app-frame .course-card small {
+  line-height: 1.3;
+}
+.app-frame .course-grid {
+  gap: 10px;
+}
+.app-frame .course-top {
+  grid-column: 1;
+}
+@media (min-width: 1650px) {
+  .app-frame .detail-content {
+    height: 420px;
+  }
+  .app-frame .chart-body {
+    height: 250px;
+  }
+  .app-frame .course-card {
+    padding: 18px;
+  }
+}
+@media (max-width: 1199px) {
+  .app-frame .detail-content {
+    height: 340px;
+  }
+}
+@media (max-width: 767px) {
+  .app-frame .detail-content {
+    height: 310px;
+  }
+  .app-frame .detail-tabs {
+    flex-wrap: wrap;
+  }
+  .app-frame .detail-tabs button {
+    flex: none;
+    font-size: 13px;
+  }
+  .app-frame .preview-select {
+    margin-left: 0;
+  }
+  .app-frame .course-top {
+    grid-column: 1/-1;
+  }
+  .app-frame .course-card {
+    padding: 14px;
+  }
+}
+.context-help {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.context-help summary {
+  cursor: pointer;
+}
+.context-help small {
+  display: block;
+  margin-top: 8px;
+}
+@media (min-width: 1280px) {
+  .app-frame .sidebar {
+    min-height: calc(100vh - 125px);
+  }
+  .app-frame .source-banner {
+    min-height: 32px;
+    padding-bottom: 6px;
+  }
+  .app-frame .page-heading {
+    margin-bottom: 10px;
+  }
+  .app-frame .metric-name {
+    min-height: 21px;
+  }
+  .app-frame .metric-value {
+    margin-block: 2px;
+  }
+  .app-frame .overview-side {
+    gap: 12px;
+  }
+  .app-frame .layer-list li {
+    padding-block: 7px;
+  }
+  .app-frame .detail-content {
+    height: 265px;
+  }
+  .app-frame .course-card {
+    padding-block: 10px;
+  }
+  .app-frame .course-card > strong {
+    font-size: 20px;
+  }
+  .app-frame .course-top {
+    grid-column: 1;
+  }
+  .app-frame .registration-panel form {
+    gap: 6px;
+  }
+  .app-frame .run-panel {
+    gap: 9px;
+  }
+  .app-frame .scenario-card {
+    min-height: 145px;
+  }
+  .app-frame .plain-notice,
+  .app-frame .simulation-bottom {
+    padding-block: 9px;
+    margin-top: 10px;
+  }
+  .app-frame .page-footer {
+    padding-block: 7px;
+    margin-top: 6px;
+  }
+}
+@media (min-width: 1650px) {
+  .app-frame .sidebar {
+    min-height: calc(100vh - 140px);
+  }
+  .app-frame .detail-content {
+    height: 365px;
+  }
+}

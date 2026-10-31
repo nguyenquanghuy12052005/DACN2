@@ -8,6 +8,141 @@ Source: [master plan](../DACN2_PROJECT_MASTER_PLAN.md). Report.pdf was not indep
 
 ## Planned boundaries
 
+### UI-03b — direct Chrome HTTPS and connection fingerprint correlation (2026-10-31)
+
+User explicitly selected UI-03b after discussing proxy's inability to observe
+browser fingerprint. Preserve backend/AI and separate native test session; change
+frontend API calls directly to Gateway18444. Vite is UI/telemetry only. Optional
+Gateway browser_lab middleware restricts exact local origin/session/owned IDs,
+bounded actions/body/concurrency, exposes generated request/connection/protocol
+headers. Defaults disabled; independent native/K3s workflows remain usable.
+
+TLS per-accepted-connection config clones capture the same listener ID as H2 and
+request ConnContext; structured events join by session+ID, no timing inference.
+Protocol additive event field checked by tests. Legacy diagnostics retained and
+fingerprint algorithms unchanged. Browser's preflight may be first H2 HEADERS;
+that observation describes the connection setup, not a specific user's identity.
+
+Scoped fresh Chrome lab profile accepts only existing cert SPKI, without global
+trust modifications. Script checks validity/SAN; ordinary Chrome self-signed
+failure remains possible. This explicit lab certificate exception is not public
+PKI trust. Tests use same pin with Chrome and never ignore all HTTPS errors.
+No dependency install, auth system, AI, mitigation, generator or autoscaler added.
+Native GUI/headless actualHTTP2/correlatedJA4/Akamai proof, Go test/vet/race and
+frontend/adapter/browser checks documented in PROGRESS; all QA runtimes stopped.
+### UI-03 — optional native live demo, implemented 2026-10-31
+
+User explicitly requested backend/Gateway connection after UI-01a; authorized this
+live integration ahead of UI-02 animation. Keep Gateway/backend/AI source untouched.
+Chose a lightweight independent native session to avoid modifying existing Pod
+DB config or competing for cluster RAM: local Vite middleware/SSE plugin in
+dashboard/server plus scripts/dashboard-live.cjs owns Gateway18444/NestJS13001
+and3 uniquely labeled test DB fixtures. Builds reuse current sources; no new
+dependencies, no env/hosts/CORS/trust-root changes, no public target or generator.
+
+Tradeoff is explicit proxy TLS/IP identity: UI displays proxy JA4, not browser
+fingerprint. This is useful live API/telemetry demo, not legitimate browser dataset
+evidence or whole K3s/AI defense pipeline. A future direct browser path still needs
+separate CORS/cert and telemetry correlation work. UI-00 K3s integration gap remains.
+
+Fixed-route local adapter limits30actions/10s,8inflight,1KiB body/64KiB response,
+5s Gateway timeout,4SSE viewers,300events/30JA4. Health probes not counted as
+workload. Full1Hz snapshots support reconnect without infinite event queue. Source
+time/capture coverage retained; completed RPS differs from admitted/arrival RPS.
+Process session only; no rate-limit/block decisions inferred from HTTP errors.
+Secrets remain local, response telemetry excludes participant codes and bodies.
+
+Runner owns exclusive lock/ports, private logs/results, fixed synthetic fixture
+lifecycle; stop file signal affects only current owned session, no PID killing of
+arbitrary apps. Before/after hashes reconciled after graceful stop. Abrupt OS kill
+is not crash-safe recovery; inspect lock/result and owned processes before manual
+fixture cleanup, do not automatically adopt or delete foreign data. Existing K3s
+integration remains scripts/m1-integration.cjs. No hosted CI claim.
+
+### UI-01 — static glass dashboard implemented, 2026-10-31
+
+UI-01a user override: Vietnamese is now the primary UI language, replacing the
+original design's English preference. Segoe UI/Arial system fonts cover Vietnamese
+without font downloads. Body/controls larger; overview uses one observation panel
+with keyboard-accessible Sơ đồ/Lưu lượng/Nhật ký/Dấu vân tay tabs. Auxiliary notes
+collapse via native details. Desktop courses use horizontal rows; narrow screens
+retain natural scrolling. compact.css contains these deliberate overrides. No
+API/data-source change or UI-02 animation implementation.
+
+One separate dashboard/ app now implements three routes from UI-00. React19.2,
+Vite6.4.5, TypeScript5.9.3, Tailwind4.1.18, router7.18.5 and Lucide0.552 pinned
+with lockfile; no backend dependencies modified. Official Vite6/Tailwind Vite
+instructions checked; package engines/peers/licenses verified against npm metadata.
+ESLint10.14/TS-ESLint8.72.1, Vitest4.1.12 and Playwright1.64.1 selected after audit.
+minimatch11.0.1 override patches dev-tool transitive glob amplification advisory;
+installed users rely on Minimatch API, lint/build/tests passed with override.
+npm audit reports0 vulnerabilities at installation time, not a permanent guarantee.
+
+CSS tokens provide pearl/ivory glass, custom gradients, dark theme, blur fallback,
+desktop/sidebar/mobile menu, keyboard focus and OS/user reduced motion. Native
+controls avoid new headless/component dependencies. No external assets/fonts.
+Static SVG topology/chart in UI-01; React Flow/Motion/ECharts deferred. Fixture
+module is explicitly synthetic; source selector hides samples in Live. Simulation
+Start/Stop locked. Client form only previews route, never calls API or claims201.
+
+Browser smoke uses installed Chrome,9 screenshots/3 viewports, axe light all
+routes/dark overview, no project API calls, no JS errors/overflow. Four behavioral
+RTL tests verify unavailable Live and no-action controls. Typecheck/build/lint
+passed. No cluster operations or Gateway/Backend/AI edits. UI-02 requires selection.
+
+### UI-00 — dashboard architecture proposal, 2026-10-31
+
+User authorized UI-00 audit/planning only. Original design source is the existing
+DACN2_GLASS_SECURITY_DASHBOARD_SPEC.md; DASHBOARD_DESIGN_SPEC.md is an entry link.
+No frontend exists. Adopt one proposed `dashboard/` React/Vite/TypeScript app with
+`/demo`, `/dashboard`, `/dashboard/simulation`, rather than two frontend services.
+The new user request extends the earlier no-frontend workload scope; backend
+business scope remains course registration, with no account/login implementation.
+Custom dashboard supplements the planned Prometheus/Grafana requirement; it does
+not silently replace M5 monitoring or advance M2/AI/policy/scaling completion.
+
+Future source layout: src/app (routes/providers), pages (three initial routes),
+components/glass, topology, charts, events, simulation; features/telemetry,
+replay, theme; styles/tokens.css; mocks and tests. UI-01 first installs only
+React/Vite/TS, Tailwind, routing and Lucide as needed. UI-02 adds Motion and
+React Flow; ECharts when charts need it. Accessible headless components/shadcn
+selectively, not a whole template. Pin compatible versions/lockfile and verify
+Node20.20.2 compatibility, licenses and official APIs before install; no package
+versions are selected/installed in UI-00. Avoid latest tooling assumptions.
+
+Design: light pearl/ivory frosted shell, warm amber accents, floating icon rail
+and toolbar, readable rounded cards, opaque blur fallback; dark theme, keyboard
+navigation, contrast and reduced motion. Topology hero shows data plane solid
+Client→Gateway→backend→DB, telemetry/control dashed to unavailable AI/K3s controls.
+No color-only status. Header exposes LAB, source mode, source age, disconnect,
+theme and pause motion. Six initial KPI slots use unavailable states for incoming,
+admitted, blocked, ready pods; Gateway p95 and health need real adapter first.
+Available completion throughput can be shown separately with correct label.
+
+Client page: list/detail/seats, synthetic studentCode input and real result
+status/request ID, no credentials form. Simulation page: disabled scenario shells,
+bound indicators and future Start/Stop; no live generator until UI-04 gate.
+Central map uses one bounded particle overlay, not React nodes per request;
+counts remain readable when animation pauses. Event-derived pulses are sampled,
+not packet capture. Details and truth rules: DASHBOARD_DATA_MAPPING.md.
+
+Browser CORS/TLS, missing stream and JA4 correlation are real integration gaps.
+Proposed local read-only telemetry adapter would consume allowlisted existing
+logs and supply snapshot/SSE, optionally private infrastructure snapshots. It is
+not an implemented API and needs UI-03 scope review. Direct browser→Gateway is
+preferred for honest browser fingerprint; proxying changes observed client TLS.
+No admin kubeconfig/secrets/DB access in frontend. AI/policy/scaling show
+Unavailable; recorded logs are Replay and fixtures Mock Design, never Live.
+
+Resource-conscious plan: no new containers/cluster/monitoring stack in UI-00/01;
+lazy-load topology/chart libraries, capped streams, stop offscreen motion. Test
+15min bounded memory/handlers in UI-05. No guarantee laptop fits full future stack.
+Skill routing: planning workflow at pinned SHA was requested but retrieval failed
+(web cache miss); no newly loaded skill claimed. Existing project guidance used.
+UI-00 gate: architecture/mapping/risks/acceptance documented; implementation
+approval remains pending. Execution backlog is only tasks/current.md; checkpoint
+is PROGRESS.md, not a second dashboard tracker.
+
 ### M1 closure — integration, capacity and limitations (verified, 30/10/2026)
 
 User requested completing M1, then selected M1-05g/h and bounded M1-06 separately.

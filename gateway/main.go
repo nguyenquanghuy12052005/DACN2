@@ -33,6 +33,10 @@ func main() {
 		log.Fatal(err)
 	}
 	target := config.upstream
+	browserConfig, err := readBrowserLabConfig(os.Getenv)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.DialContext = (&net.Dialer{Timeout: 3 * time.Second, KeepAlive: 30 * time.Second}).DialContext
@@ -52,7 +56,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              config.listen,
-		Handler:           telemetry,
+		Handler:           browserLabHandler(telemetry, browserConfig),
 		ConnContext:       gatewayConnContext,
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       30 * time.Second,
@@ -98,7 +102,23 @@ func main() {
 			return
 		}
 		log.Printf("H2 observation: %s", encoded)
+		structured, encodeErr := json.Marshal(struct {
+			SchemaVersion int    `json:"schema_version"`
+			Event         string `json:"event"`
+			h2ObservationResult
+		}{1, "gateway_h2", result})
+		if encodeErr == nil {
+			requestLog.Print(string(structured))
+		}
 	})
+	manager.reportTLS = func(event tlsFingerprintEvent) {
+		encoded, err := json.Marshal(event)
+		if err == nil {
+			requestLog.Print(string(encoded))
+		} else {
+			log.Print("TLS event encoding failed")
+		}
+	}
 	log.Printf("Gateway listening on https://%s -> %s", server.Addr, target)
 	log.Fatal(server.Serve(&observedTLSListener{listener, server.TLSConfig, manager}))
 }

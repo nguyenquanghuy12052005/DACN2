@@ -110,7 +110,7 @@ func TestTelemetryIdentityAndPrivacy(t *testing.T) {
 	}
 	var fields map[string]any
 	_ = json.Unmarshal(encoded, &fields)
-	if len(fields) != 18 {
+	if len(fields) != 19 || fields["protocol"] != "HTTP/1.1" {
 		t.Fatalf("schema has %d fields", len(fields))
 	}
 }
