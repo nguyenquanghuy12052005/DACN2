@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "D:\\DACN2\\.archify\\architecture-dacn2-runtime-20261101-194706\\candidate.json",
+    "sha256": "8aca9f30f5ab4dbd3ad2212eb66abf07c4c5a835f020d0191e2746f93d9c96c3",
+    "bytes": 8725
+  },
+  "artifact": {
+    "path": "D:\\DACN2\\.archify\\architecture-dacn2-runtime-20261101-194706\\dacn2-runtime.html",
+    "sha256": "519dd37c70af2f90d2279c5baf4e3993aa72a722e377113f476eb02427a2f744",
+    "bytes": 855666
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [
+    {
+      "code": "i18n/locale-fallback",
+      "severity": "warning",
+      "message": "meta.locale \"vi\" has no bundled catalog and no usable meta.translations; the Viewer chrome and <html lang> fall back to English.",
+      "subject": {
+        "diagramType": "architecture",
+        "path": "/meta/locale"
+      },
+      "evidence": {
+        "locale": "vi",
+        "bundledLocales": [
+          "en",
+          "zh-CN",
+          "zh-TW",
+          "es",
+          "ko",
+          "ar"
+        ]
+      },
+      "supportedFixes": [
+        "Supply meta.translations for this locale.",
+        "Use a bundled locale: en, zh-CN, zh-TW, es, ko, ar."
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "D:\\DACN2\\.archify\\architecture-dacn2-runtime-20261101-194706\\dacn2-runtime.finalize.json",
+    "summaryReceipt": "D:\\DACN2\\.archify\\architecture-dacn2-runtime-20261101-194706\\dacn2-runtime.finalize-summary.json",
+    "browserCheckReceipt": "D:\\DACN2\\.archify\\architecture-dacn2-runtime-20261101-194706\\dacn2-runtime.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-01T12:47:22.934Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 4454,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

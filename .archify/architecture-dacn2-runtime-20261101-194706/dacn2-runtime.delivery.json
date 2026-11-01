@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "49b3f6e1-80aa-46d4-90c1-a5d2784a0327",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "D:\\DACN2\\.archify\\architecture-dacn2-runtime-20261101-194706\\candidate.json",
+  "output": "D:\\DACN2\\.archify\\architecture-dacn2-runtime-20261101-194706\\dacn2-runtime.html",
+  "specification": {
+    "sha256": "8aca9f30f5ab4dbd3ad2212eb66abf07c4c5a835f020d0191e2746f93d9c96c3",
+    "bytes": 8725
+  },
+  "artifact": {
+    "sha256": "519dd37c70af2f90d2279c5baf4e3993aa72a722e377113f476eb02427a2f744",
+    "bytes": 855666
+  }
+}

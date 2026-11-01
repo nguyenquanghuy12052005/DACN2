@@ -1,0 +1,407 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DACN2 — Kiến trúc runtime hiện tại",
+    "locale": "vi",
+    "output": ".archify/architecture-dacn2-runtime-20261101-194706/dacn2-runtime.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nguyenquanghuy12052005/DACN2.git",
+      "revision": "55b3b77460d7accc45f4bd522127c2baa8355f92",
+      "link_mode": "web"
+    }
+  },
+  "components": [
+    {
+      "id": "chrome-native",
+      "type": "external",
+      "label": "Chrome lab",
+      "sublabel": "Thao tác thật",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "scripts/dashboard-live.cjs",
+          "line": 340,
+          "end_line": 346
+        }
+      ]
+    },
+    {
+      "id": "gw-native",
+      "type": "security",
+      "label": "Go Gateway",
+      "sublabel": "HTTPS :18444 · JA4 / H2",
+      "pos": [
+        360,
+        80
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "scripts/dashboard-live.cjs",
+          "line": 340,
+          "end_line": 355
+        },
+        {
+          "path": "gateway/main.go",
+          "line": 41,
+          "end_line": 65
+        }
+      ]
+    },
+    {
+      "id": "be-native",
+      "type": "backend",
+      "label": "NestJS native",
+      "sublabel": "HTTP :13001",
+      "pos": [
+        680,
+        80
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "scripts/dashboard-live.cjs",
+          "line": 327,
+          "end_line": 339
+        },
+        {
+          "path": "backend/src/database.service.ts",
+          "line": 22,
+          "end_line": 31
+        }
+      ]
+    },
+    {
+      "id": "pg-native",
+      "type": "database",
+      "label": "PostgreSQL Windows",
+      "sublabel": "dacn2 · :5432",
+      "pos": [
+        980,
+        80
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "scripts/dashboard-live.cjs",
+          "line": 14,
+          "end_line": 21
+        },
+        {
+          "path": "backend/src/database.service.ts",
+          "line": 22,
+          "end_line": 31
+        }
+      ]
+    },
+    {
+      "id": "ui-native",
+      "type": "frontend",
+      "label": "React dashboard",
+      "sublabel": "Vite :5173 · Live",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "scripts/dashboard-live.cjs",
+          "line": 368,
+          "end_line": 380
+        }
+      ]
+    },
+    {
+      "id": "adapter-native",
+      "type": "backend",
+      "label": "Live adapter",
+      "sublabel": "Lọc log / ghép connection ID",
+      "pos": [
+        360,
+        270
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "scripts/dashboard-live.cjs",
+          "line": 102,
+          "end_line": 111
+        },
+        {
+          "path": "scripts/dashboard-live.cjs",
+          "line": 320,
+          "end_line": 326
+        },
+        {
+          "path": "dashboard/server/live-adapter.cjs",
+          "line": 296,
+          "end_line": 304
+        }
+      ]
+    },
+    {
+      "id": "client-team",
+      "type": "external",
+      "label": "Client trên host",
+      "sublabel": "curl / HTTPS",
+      "pos": [
+        40,
+        530
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "docs/DEPLOYMENT.md",
+          "line": 1,
+          "end_line": 20
+        }
+      ]
+    },
+    {
+      "id": "gw-team",
+      "type": "security",
+      "label": "Gateway container",
+      "sublabel": "Host :18445 → :8443",
+      "pos": [
+        360,
+        530
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "compose.team.yaml",
+          "line": 52,
+          "end_line": 82
+        }
+      ]
+    },
+    {
+      "id": "be-team",
+      "type": "backend",
+      "label": "Backend container",
+      "sublabel": "backend:3000 · host :13002",
+      "pos": [
+        680,
+        530
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "compose.team.yaml",
+          "line": 24,
+          "end_line": 40
+        },
+        {
+          "path": "backend/src/database.service.ts",
+          "line": 22,
+          "end_line": 31
+        }
+      ]
+    },
+    {
+      "id": "pg-team",
+      "type": "database",
+      "label": "PostgreSQL container",
+      "sublabel": "dacn2 · volume riêng",
+      "pos": [
+        980,
+        530
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "compose.team.yaml",
+          "line": 4,
+          "end_line": 19
+        }
+      ]
+    },
+    {
+      "id": "ui-team",
+      "type": "frontend",
+      "label": "Dashboard container",
+      "sublabel": "Host :5173 · Preview",
+      "pos": [
+        40,
+        730
+      ],
+      "size": [
+        172,
+        74
+      ],
+      "sources": [
+        {
+          "path": "compose.team.yaml",
+          "line": 84,
+          "end_line": 103
+        },
+        {
+          "path": "dashboard/Dockerfile",
+          "line": 9,
+          "end_line": 17
+        }
+      ],
+      "tag": "Live chưa nối"
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1",
+      "from": "chrome-native",
+      "to": "gw-native",
+      "label": "HTTPS / H2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "n2",
+      "from": "gw-native",
+      "to": "be-native",
+      "label": "HTTP proxy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "n3",
+      "from": "be-native",
+      "to": "pg-native",
+      "label": "SQL",
+      "variant": "emphasis"
+    },
+    {
+      "id": "n4",
+      "from": "ui-native",
+      "to": "chrome-native",
+      "label": "UI :5173",
+      "variant": "default"
+    },
+    {
+      "id": "n5",
+      "from": "gw-native",
+      "to": "adapter-native",
+      "label": "JSON log",
+      "variant": "default"
+    },
+    {
+      "id": "n6",
+      "from": "adapter-native",
+      "to": "ui-native",
+      "label": "SSE",
+      "variant": "default"
+    },
+    {
+      "id": "d1",
+      "from": "client-team",
+      "to": "gw-team",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d2",
+      "from": "gw-team",
+      "to": "be-team",
+      "label": "HTTP proxy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d3",
+      "from": "be-team",
+      "to": "pg-team",
+      "label": "SQL",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d4",
+      "from": "ui-team",
+      "to": "client-team",
+      "label": "UI preview",
+      "variant": "default"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1 · Native Windows — đăng ký và fingerprint Live",
+      "wraps": [
+        "chrome-native",
+        "gw-native",
+        "be-native",
+        "pg-native",
+        "ui-native",
+        "adapter-native"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2 · Docker Compose — đường API đã nối",
+      "wraps": [
+        "gw-team",
+        "be-team",
+        "pg-team"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Hai chế độ chạy riêng",
+      "items": [
+        "Native: Chrome gọi Gateway trực tiếp; adapter phát telemetry cho UI.",
+        "Docker: API đã nối DB; dashboard chỉ preview, không có đường Live tới Gateway.",
+        "Hai chế độ cùng dùng host :5173 nên không chạy UI đồng thời."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "K3s là lab riêng đã có",
+      "items": [
+        "kubernetes/backend.yaml khai báo 1 Pod backend.",
+        "K3s không nằm trong compose.team.yaml; chưa có autoscaler tự động."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Giai đoạn dự kiến — chưa triển khai",
+      "items": [
+        "M2: cửa sổ 5 giây và dataset 12 feature.",
+        "FastAPI: AI, client policy và điều khiển replicas.",
+        "Prometheus / Grafana: monitoring theo kế hoạch."
+      ]
+    }
+  ]
+}
