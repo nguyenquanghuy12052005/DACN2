@@ -1,5 +1,52 @@
 # Current milestone
 
+TEAM-HANDOFF source package prepared (2026-11-01), user asked to stop excessive
+verification. Added Windows scripts/team.ps1 setup/start/stop/status/logs, local
+certificate generator and .env.team.example. New checkouts generate their own
+secrets/cert; existing .env.team without TLS override preserves old cert mounts.
+No Docker/test/smoke/rehearsal run. Source-only ZIP excludes secrets/dependencies/
+builds/captures/backups. README explicitly records Docker dashboard preview-only,
+Live integration pending; not a complete end-to-end release. No commit/push.
+
+
+TEAM-UI01 user build/HTTP-health PASS: dashboard on5173, fourCompose services
+running. Browser visual checks not yet recorded; Live adapter still missing.
+Next TEAM-UI02 direct-browser API/telemetry integration, then portable cert/env
+setup and clean-clone rehearsal. Not yet a complete team handoff package.
+
+
+TEAM-GW02 user write/restart proof PASS:201→count1/seats59→409 (Docker dacn2).
+TEAM-UI01 preview image/service prepared, USER BUILD PENDING. Container UI is
+explicitly mock/unavailableLive, no adapter yet. Native command unchanged.
+Next: user build/three-route check, then Compose Live integration and portable
+team setup. No agent runtime/tests, commit or push in this slice.
+
+
+TEAM-GW02 local user build/read-smoke PASS (2026-11-01):3containers running,
+PostgreSQL/backend healthy; curl --cacert to18445 ownhealthok and5courses returned.
+Compose dashboard/browserH2/write-persistence and clean-clone team setup still
+pending. No agent runtime changes; see newest PROGRESS checkpoint.
+
+
+TEAM-GW01 user test/vet PASS (2026-11-01): user transcript go test60s
+ok dacn2/gateway3.419s, go vet exit with no diagnostic. TEAM-GW02 implemented,
+USER BUILD/SMOKE PENDING: Gateway Dockerfile Go1.27.3 multi-stage/scratch/nonroot,
+allowlist context excludes cert/key; Compose explicit mode backend:3000, host
+loopback18445, existing cert/key read-only mounts with missing-path refusal.
+No agent Docker build/start/tests. Native dashboard not connected to this stack;
+per-machine certificate provisioning and team dashboard packaging remain pending.
+
+
+TEAM-GW01 IMPLEMENTED / USER VERIFICATION PENDING (2026-11-01): user asks agent
+ to edit config; user will run tests. Gateway DACN2_NETWORK_MODE=compose-team
+ adds exact listener0.0.0.0:8443 and HTTPbackend:3000 origin exceptions; native
+ loopback/defaults preserved, unknown modes refused. Added boundary tests and
+ corrected existing test getenv stub to return empty for unknown keys. gofmt and
+ diff whitespace check performed; Go tests/vet/build NOT_RUN in this slice.
+ No services/DB/Compose/cert changes or commit/push. Next user runs Go tests,
+ then Gateway image/Compose/certificate wiring (not implemented yet).
+
+
 CLEAN-02 COMPLETE (2026-11-01): maintenance/folder cleanup. Entrypoints unchanged;
 shared scripts→scripts/lib, tests→scripts/tests. Removed unreachable mock branches.
 1765files/726.15MiB disposable artifacts removed;558 retained evidence hashes PASS.

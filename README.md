@@ -1,5 +1,46 @@
 # DACN2 — L7 cyber-defense lab
 
+## Nhận dự án và chạy bằng Docker (Windows)
+
+Yêu cầu: Git, Docker Desktop đang chạy Linux containers, PowerShell và mạng
+để tải image/dependencies lần đầu. Không cần cài Node/Go/PostgreSQL trên host.
+Sau khi clone Git hoặc giải nén gói source, mở PowerShell tại thư mục dự án:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\team.ps1 start
+```
+
+Lần đầu script tạo `.env.team` với mật khẩu riêng và certificate lab riêng
+trong `gateway/.team-tls/`, rồi build/start4service. DB mới tự tạo role,
+2database và5môn qua `backend/database/team-init.sql`. DB của mỗi thành viên
+nằm trong volume riêng trên máy họ; không có dữ liệu đăng ký/secret của máy gốc.
+Không dùng volume có sẵn từ dự án khác. Nếu đổi mật khẩu sau khi DB đã tạo,
+phải đồng bộ role DB riêng; sửa env không tự đổi mật khẩu trong volume.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\team.ps1 status
+powershell -ExecutionPolicy Bypass -File .\scripts\team.ps1 logs
+powershell -ExecutionPolicy Bypass -File .\scripts\team.ps1 stop
+```
+
+Stop giữ dữ liệu. Không dùng `down -v` trừ khi chủ động muốn xoá DB local.
+Mở http://127.0.0.1:5173/dashboard. Docker backend:13002; HTTPS Gateway:18445;
+PostgreSQL:15433. Nếu5173đang bận, dừng demo native trong terminal của nó.
+
+**Trạng thái bàn giao:** API Gateway→backend→DB đã được người dùng xác minh
+đọc/ghi/giữ đăng ký qua restart. Dashboard Docker hiện là preview có nhãn mẫu;
+Live/đăng ký/fingerprint trong dashboard Docker chưa nối. Bản native đầy đủ hơn
+vẫn chạy qua scripts/dashboard-live.cjs trên môi trường Windows đã cấu hình.
+AI/dataset/autoscaling chưa triển khai. Đây là source và môi trường để nhóm
+làm tiếp, chưa phải bản demo tích hợp toàn bộ. Bộ setup máy mới chưa được chạy
+rehearsal trong phiên đóng gói; không coi các bước chưa chạy là PASS.
+
+Mỗi người sửa source trong bản clone, chạy lại lệnh start để rebuild, commit và
+push branch riêng. Không gửi node_modules, env thật, cert/key hoặc volume DB.
+Certificate tự ký chỉ dùng lab; Chrome có thể báo chưa tin cậy. Hướng dẫn mở
+Chrome lab native không tự áp dụng cho container. Không tắt kiểm tra TLS toàn cục.
+
+
 Status (2026-11-01): **M1 complete in the controlled local lab scope.** HTTPS/H2 Gateway → one K3s backend Pod → Windows PostgreSQL, test-DB writes/races/recovery and one-Pod read benchmark verified. C_work319req/s for the recorded500m/192Mi read profile, with20%headroom; saturation not reached at400RPS. M2 feature/window collector/dataset remains next. HostedCI and academic acceptance questions remain; see [current work](tasks/current.md).
 
 The planned system uses a Go HTTPS Gateway, Python/FastAPI ML control plane, and NestJS/PostgreSQL backend on K3s. It distinguishes Normal, Flash Crowd, Pure L7 DDoS, and Mixed Traffic; applies per-client mitigation; and scales backend Pods from measured admitted RPS. Prometheus/Grafana expose actual behavior.

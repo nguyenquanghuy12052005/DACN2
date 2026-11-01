@@ -1,5 +1,16 @@
 # Architecture and decisions
 
+## TEAM-GW01 — opt-in Compose network boundary (2026-11-01)
+
+Gateway config now accepts DACN2_NETWORK_MODE=compose-team to permit exactly
+0.0.0.0:8443 and upstream http://backend:3000 (optional root slash), in addition
+to existing loopback endpoints. Native defaults stay unchanged; unset mode
+cannot use either new endpoint. Unknown modes fail closed; no arbitrary DNS,
+LAN addresses, credentials, non-root paths, queries or nonempty fragments.
+Future Compose must publish Gateway only to host loopback. This config slice
+is not a deployed container or public-network security boundary. User tests pending.
+
+
 ## UI-03c decision — persistent demo and explanatory feature UI (2026-11-01)
 
 User authorized steps1–2 only; dataset/export step3 deferred. Reuse existing

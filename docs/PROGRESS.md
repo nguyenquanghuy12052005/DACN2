@@ -1,5 +1,86 @@
 # DACN2 — checkpoint tiếp tục dự án
 
+TEAM-HANDOFF source package prepared (2026-11-01), user asked to stop excessive
+verification. Added Windows scripts/team.ps1 setup/start/stop/status/logs, local
+certificate generator and .env.team.example. New checkouts generate their own
+secrets/cert; existing .env.team without TLS override preserves old cert mounts.
+No Docker/test/smoke/rehearsal run. Source-only ZIP excludes secrets/dependencies/
+builds/captures/backups. README explicitly records Docker dashboard preview-only,
+Live integration pending; not a complete end-to-end release. No commit/push.
+
+
+## TEAM-UI01 user container build PASS (2026-11-01)
+
+User attachment e105f0ad-4964-48b4-ae36-aa0c4e6a23ea/Pasted text.txt shows dashboard
+npmci/build/image export PASS and container healthy on127.0.0.1:5173. Four services
+are running; postgres/backend/dashboard healthy, Gateway running (no container
+healthcheck). This proves built SPA HTTP response, not actual browser route or
+Live integration. User browser ambient URL is /dashboard; no rendered UI audit
+performed here. Next TEAM-UI02: portable Live backend/Gateway API + telemetry
+adapter/certificate handling with direct Chrome→Gateway preserved. Current image
+remains static/mock; packaging and clean-clone handoff are not complete.
+No agent runtime actions/tests or commit/push this evidence turn.
+
+
+## TEAM-UI01 — container preview prepared, user build pending (2026-11-01)
+
+User transcript confirms Compose API write201→backendrestart→count1/seats59→
+duplicate409 for TEAM_DEMO001/course1. This is an actual write to Docker dacn2;
+no agent DB/runtime actions or independent verification in this turn.
+
+Added dashboard Dockerfile/allowlist context and Compose dashboard service at
+host127.0.0.1:5173. Multi-stage pinned Node24, nonroot; built SPA served by Vite
+preview for local team development only. No Live metadata/adapter injected:
+Mock remains visibly labeled; Live remains unavailable. Health only verifies
+UI serving, not Gateway/backend integration. Runtime includes Vite development
+dependencies intentionally; no production hosting or hot reload claim. Source
+edits require image rebuild. User build/browser checks pending; next implement
+portable Live adapter/telemetry/auth/certificate wiring, then clean-clone setup.
+No native runner used inside container; native runner still targets Windows DB.
+
+
+## TEAM-GW02 user smoke PASS (2026-11-01)
+
+User supplied Docker build/ps/curl transcript: Gateway image build PASS on
+Go1.27.3-bookworm index d9b6a1beb9474adc2a1ce842573639b44b2a0dd49b6669f51d3821baf9ec37c9.
+postgres/backend healthy; gateway started and actual certificate-verified HTTPS
+GET /gateway/health returned dacn2-gateway ok; /courses returned5seed courses.
+This confirms local Gatewaycontainer→backendcontainer→PostgreSQLcontainer read
+path. No Compose write/restart persistence/browserH2/fingerprint/dashboard proof
+in this transcript. No agent runtime actions/tests; evidence read from user
+attachment e5d4b716-9ffd-4c1d-a3a9-49fcb9a90730/Pasted text.txt.
+Team packaging remains incomplete: portable certificate/env/bootstrap procedure,
+container dashboard/telemetry/browser integration and clean-clone rehearsal
+pending. Native dashboard runner still targets Windows PG, not Compose.
+
+## TEAM-GW02 — Gateway container prepared, user build pending (2026-11-01)
+
+User reports TEAM-GW01 go test PASS3.419s and go vet no diagnostics. Added
+Gateway Dockerfile and allowlist .dockerignore; official Go1.27.3-bookworm tag
+verified against Docker Hub, matching go.mod. Static CGO0 runtime scratch, UID65534,
+no certificate/private key embedded. Compose adds gateway→backend, depends healthy,
+only127.0.0.1:18445 published; existing cert/key mounted read-only with
+create_host_path:false. Readonly runtime/dropcaps/no-new-privileges. No agent
+build/test/start performed: user runs build and certificate-verified GET smoke.
+Docker Desktop file readability still unverified; Linux teams must grant only
+appropriate read access to mounted key for container UID. Current cert is local;
+new member certificate generation and dashboard integration are later steps.
+
+
+## TEAM-GW01 — config ready, user tests pending (2026-11-01)
+
+User delegated only Gateway config edit and will run tests. Moved the user's
+partially inserted networkMode block inside readGatewayConfig; added opt-in
+compose-team with exact0.0.0.0:8443 listener and http://backend:3000[/] upstream.
+Other HTTP origin restrictions and native loopback defaults remain. Unknown
+mode refused without echoing input. Added config boundary tests, preserving
+existing assertions; fixed old getenv stub that returned listener text for any
+unknown key. gofmt/diff whitespace check done; no tests/vet/build run by agent.
+No Docker/runtime/DB/cert/Compose changes. User-supplied evidence previously
+shows team PostgreSQL+backend healthy and5courses read; not reverified here.
+Gateway Dockerfile and Compose integration still pending. No commit/push.
+
+
 Cập nhật: 01/11/2026 (Asia/Bangkok). **M1 hoàn thành trong phạm vi lab local đã kiểm chứng.** Cluster giữ STOPPED, M2 chưa bắt đầu. Tracker duy nhất: tasks/current.md.
 
 ## CLEAN-02 COMPLETE — code organization and disposable artifacts (2026-11-01)

@@ -14,12 +14,18 @@ type gatewayConfig struct {
 }
 
 func readGatewayConfig(getenv func(string) string) (gatewayConfig, error) {
+	networkMode := getenv("DACN2_NETWORK_MODE")
+	if networkMode != "" && networkMode != "compose-team" {
+		return gatewayConfig{}, fmt.Errorf("unsupported DACN2_NETWORK_MODE")
+	}
+	teamMode := networkMode == "compose-team"
+
 	listen := getenv("DACN2_LISTEN_ADDR")
 	if listen == "" {
 		listen = "127.0.0.1:8443"
 	}
-	if !loopbackEndpoint(listen) {
-		return gatewayConfig{}, fmt.Errorf("DACN2_LISTEN_ADDR must be a loopback IP and explicit port")
+	if !loopbackEndpoint(listen) && !(teamMode && listen == "0.0.0.0:8443") {
+		return gatewayConfig{}, fmt.Errorf("listen address is not allowed in the selected network mode")
 	}
 	target := getenv("DACN2_UPSTREAM_URL")
 	if target == "" {
@@ -28,8 +34,9 @@ func readGatewayConfig(getenv func(string) string) (gatewayConfig, error) {
 	u, err := url.Parse(target)
 	if err != nil || u.Scheme != "http" || u.User != nil || u.Opaque != "" ||
 		(u.Path != "" && u.Path != "/") || u.RawPath != "" || u.RawQuery != "" || u.ForceQuery ||
-		u.Fragment != "" || u.RawFragment != "" || !loopbackEndpoint(u.Host) {
-		return gatewayConfig{}, fmt.Errorf("DACN2_UPSTREAM_URL must be an HTTP loopback origin with explicit port, without credentials, query or fragment")
+		u.Fragment != "" || u.RawFragment != "" ||
+		(!loopbackEndpoint(u.Host) && !(teamMode && u.Host == "backend:3000")) {
+		return gatewayConfig{}, fmt.Errorf("upstream must be an allowed HTTP origin without credentials, non-root path, query or fragment")
 	}
 	return gatewayConfig{listen: listen, upstream: u}, nil
 }

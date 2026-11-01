@@ -1,0 +1,106 @@
+name: dacn2-team
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dacn2
+      POSTGRES_USER: dacn2_admin
+      POSTGRES_PASSWORD: ${TEAM_POSTGRES_PASSWORD:?Missing TEAM_POSTGRES_PASSWORD}
+      TEAM_APP_PASSWORD: ${TEAM_APP_PASSWORD:?Missing TEAM_APP_PASSWORD}
+    ports:
+      - "127.0.0.1:15433:5432"
+    volumes:
+      - team_postgres_data:/var/lib/postgresql/data
+      - ./backend/database/team-init.sql:/docker-entrypoint-initdb.d/10-team-init.sql:ro
+      - ./backend/database/migrations:/opt/dacn2/migrations:ro
+      - ./backend/test/fixtures/grants.sql:/opt/dacn2/test-grants.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dacn2_admin -d dacn2"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3000"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: dacn2
+      DB_USER: dacn2_app
+      DB_PASSWORD: ${TEAM_APP_PASSWORD:?Missing TEAM_APP_PASSWORD}
+    ports:
+      - "127.0.0.1:13002:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/health',{signal:AbortSignal.timeout(2000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    environment:
+      DACN2_NETWORK_MODE: compose-team
+      DACN2_LISTEN_ADDR: "0.0.0.0:8443"
+      DACN2_UPSTREAM_URL: "http://backend:3000"
+    ports:
+      - "127.0.0.1:18445:8443"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: "${TEAM_TLS_DIR:-./gateway}/cert.pem"
+        target: /app/cert.pem
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: "${TEAM_TLS_DIR:-./gateway}/key.pem"
+        target: /app/key.pem
+        read_only: true
+        bind:
+          create_host_path: false
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:5173:5173"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:5173/dashboard',{signal:AbortSignal.timeout(2000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  team_postgres_data:

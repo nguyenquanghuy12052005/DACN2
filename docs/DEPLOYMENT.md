@@ -1,5 +1,39 @@
 # Deployment and recovery
 
+## Team dashboard preview — user build pending (2026-11-01)
+
+`docker compose --env-file .env.team -f compose.team.yaml up -d --build --wait dashboard`
+serves built static SPA at http://127.0.0.1:5173/dashboard, /demo and
+/dashboard/simulation. Stop native Vite/demo in its own terminal first if it owns
+5173. This image uses Vite preview for local development review; no production
+hosting, source watch, Live telemetry or registration integration yet. Do not
+run native dashboard-live.cjs alongside this service. Rebuild after source edits.
+Healthy only means UI HTTP responds; Mock labels and unavailableLive must remain.
+No Docker socket or credentials are mounted in the UI container.
+
+
+## Team Gateway container — user verification pending (2026-11-01)
+
+From project root: `docker compose --env-file .env.team -f compose.team.yaml up -d --build gateway`.
+Then verify `https://127.0.0.1:18445/gateway/health` and `/courses` with curl.exe
+`--cacert gateway/cert.pem`. No TLS verification bypass. Existing certificate
+must be valid for127.0.0.1 and key readable by containerUID65534. Missing paths
+fail rather than creating directories. Cert/key stay local/ignored; teams must
+provision their own (not yet automated). Runtime is scratch: no shell/curl inside.
+No Gateway container healthcheck yet; `up -d`/running status alone is NOT readiness.
+Actual HTTPS GET is required. This does not connect the native dashboard to Compose.
+
+
+## Team Gateway config preparation — tests pending (2026-11-01)
+
+Config only: future Gateway container should set DACN2_NETWORK_MODE=compose-team,
+DACN2_LISTEN_ADDR=0.0.0.0:8443, DACN2_UPSTREAM_URL=http://backend:3000. Without
+explicit mode, existing native loopback restrictions apply. Compose Gateway
+service/image/certificate mounts are not yet implemented by this slice.
+User verification from gateway/: `go test -timeout 60s ./...` then `go vet ./...`.
+Do not point the existing native dashboard runner at Docker implicitly.
+
+
 ## Current dashboard procedure — UI-03c (2026-11-01)
 
 Default persistent demo (native, PostgreSQL Windows required, no Docker/K3s):
