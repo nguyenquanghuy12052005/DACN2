@@ -9,6 +9,7 @@ import {
   SectionTitle,
   Unavailable,
 } from '../components/ui';
+import { FingerprintPanel } from '../components/FingerprintPanel';
 import { Topology } from '../components/Topology';
 import { TrafficChart } from '../components/TrafficChart';
 import { events } from '../mocks/fixtures';
@@ -175,53 +176,7 @@ export function Overview({
               {tab === 'topology' ? (
                 <Topology connected={!!data} />
               ) : tab === 'fingerprints' ? (
-                data ? (
-                  <div className="live-fingerprints">
-                    <p>
-                      Dấu vân tay từ kết nối trực tiếp tới Gateway. Liên kết
-                      bằng mã kết nối, không đoán theo IP hoặc thời gian.
-                    </p>
-                    {data.connections?.length ? (
-                      data.connections.map((c) => (
-                        <div
-                          className="connection-fingerprint"
-                          key={c.connectionId}
-                        >
-                          <strong>Kết nối {c.connectionId}</strong>
-                          <code>JA4: {c.ja4 ?? 'Chưa quan sát'}</code>
-                          <p>
-                            Giao thức:{' '}
-                            {[
-                              ...new Set(
-                                data.events
-                                  .filter(
-                                    (e) => e.connectionId === c.connectionId,
-                                  )
-                                  .map((e) => e.protocol),
-                              ),
-                            ].join(', ')}
-                          </p>
-                          <p>
-                            HTTP/2: {c.h2?.status ?? 'Chưa quan sát'} · Akamai:{' '}
-                            {c.h2?.akamai ??
-                              `Chưa đủ dữ liệu (${c.h2?.reason ?? 'chưa có quan sát'})`}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <p>Chưa có quan sát JA4.</p>
-                    )}
-                    <p>
-                      Mã kết nối dùng chung với nhật ký yêu cầu. Dấu vân tay mô
-                      tả phần mềm kết nối, không kết luận người hay bot.
-                    </p>
-                  </div>
-                ) : (
-                  <Unavailable
-                    title="Chưa có nguồn dấu vân tay"
-                    description="JA4 và HTTP/2 mô tả cách kết nối. Chưa đủ dữ liệu để gán cho từng người hoặc bot."
-                  />
-                )
+                <FingerprintPanel data={data} />
               ) : !showSamples && !data ? (
                 preview === 'loading' && mock ? (
                   <div role="status" className="loading-state">

@@ -59,7 +59,9 @@ export function Topology({ connected = false }: { connected?: boolean }) {
             <Box size={25} />
           </div>
           <strong>NestJS</strong>
-          <small>{connected ? 'Windows · DB test' : 'Backend trên K3s'}</small>
+          <small>
+            {connected ? 'Windows · PostgreSQL' : 'Backend trên K3s'}
+          </small>
         </div>
         <div className="flow-link last-link" aria-hidden="true">
           <span>SQL</span>

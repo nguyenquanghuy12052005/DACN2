@@ -12,6 +12,34 @@ function start(path = '/dashboard') {
   );
 }
 describe('design preview provenance and boundaries', () => {
+  it('explains all 12 planned features without inventing values, including while disconnected', async () => {
+    start();
+    await userEvent.selectOptions(
+      screen.getByLabelText('Nguồn dữ liệu'),
+      'live',
+    );
+    await userEvent.click(screen.getByRole('tab', { name: 'Dấu vân tay' }));
+    expect(
+      screen.getByText(/Chưa kết nối dữ liệu. Danh mục/),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: '12 feature dự kiến' }),
+    );
+    expect(
+      document.querySelectorAll('.feature-catalog > details'),
+    ).toHaveLength(12);
+    await userEvent.type(screen.getByLabelText('Tìm feature'), 't_up');
+    expect(
+      document.querySelectorAll('.feature-catalog > details'),
+    ).toHaveLength(1);
+    await userEvent.click(screen.getByText('t_up', { exact: true }));
+    expect(screen.getByText(/chưa có phép đo upstream riêng/)).toBeVisible();
+    expect(screen.getByText('— · Chưa triển khai')).toBeVisible();
+    expect(screen.queryByText('4.37')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Xuất CSV/ }),
+    ).not.toBeInTheDocument();
+  });
   it('switches compact detail tabs by keyboard and keeps events visibly labeled as samples', async () => {
     start();
     const topology = screen.getByRole('tab', { name: 'Sơ đồ' });

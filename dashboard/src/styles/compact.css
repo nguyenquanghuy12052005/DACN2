@@ -13,6 +13,122 @@
   padding: 8px 0;
   overflow-wrap: anywhere;
 }
+.app-frame .detail-content:has(.fingerprint-explorer) {
+  height: auto;
+  max-height: 65vh;
+  min-height: 280px;
+  overflow: auto;
+}
+.fingerprint-explorer {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.fingerprint-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.fingerprint-switch button[aria-pressed='true'] {
+  outline: 2px solid var(--muted);
+  outline-offset: -2px;
+}
+.fingerprint-explorer h3 {
+  font-size: 17px;
+  margin-bottom: 10px;
+}
+.connection-fingerprint {
+  padding-block: 16px;
+  border-top: 1px solid var(--border);
+}
+.signal-list > div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.signal-list dt {
+  font-weight: 600;
+}
+.signal-list dd,
+.feature-catalog dd {
+  margin: 0;
+  min-width: 0;
+}
+.signal-list small {
+  color: var(--muted);
+  display: block;
+}
+.live-fingerprints .signal-list code {
+  padding: 0 0 4px;
+  white-space: pre-wrap;
+}
+.request-observations {
+  padding-left: 20px;
+}
+.request-observations span {
+  display: block;
+}
+.feature-search {
+  display: grid;
+  gap: 6px;
+  margin-block: 12px;
+}
+.feature-search input {
+  width: 100%;
+  min-width: 0;
+}
+.feature-catalog details {
+  border-top: 1px solid var(--border);
+  padding-block: 12px;
+}
+.feature-catalog summary {
+  cursor: pointer;
+}
+.feature-catalog summary code {
+  display: inline-block;
+  width: 120px;
+  overflow-wrap: anywhere;
+}
+.feature-status {
+  color: var(--muted);
+  margin-left: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.feature-catalog dl {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 8px 12px;
+}
+.feature-catalog p {
+  margin-block: 10px;
+}
+.dataset-context {
+  margin-top: 18px;
+}
+.dataset-context code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .signal-list > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .feature-catalog dl {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .feature-catalog dt {
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  .feature-catalog summary code {
+    width: auto;
+    margin-right: 8px;
+  }
+}
 .metric-value:has(small:empty) {
   overflow-wrap: anywhere;
 }

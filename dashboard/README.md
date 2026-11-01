@@ -5,51 +5,34 @@ One React app provides
 and Segoe UI/Arial per the user's updated preference. UI-03b adds an opt-in
 Gateway browser boundary and correlated TLS/H2 logs; backend and AI are unchanged.
 
-## Demo trực tiếp — UI-03
+## Demo trực tiếp — lưu lâu dài trong dacn2
 
-**UI-03b đã đổi sang Chrome gọi HTTPS trực tiếp tới Gateway.** Lệnh khởi động
-vẫn như dưới; nó tự mở cửa sổ Chrome lab riêng. Dùng cửa sổ này để demo: khoá
-certificate lab được cho phép riêng, không sửa Chrome chính hoặc trust store Windows.
-Luồng mới: Chrome→HTTPS Gateway18444→NestJS13001→dacn2_test; Vite chỉ hiển thị UI/log.
-Kết quả đăng ký có HTTP/2.0 và mã kết nối; đối chiếu mã đó ở Nhật ký/Dấu vân tay
-để xem JA4 và Akamai của đúng kết nối trình duyệt. Thiếu capture được ghi rõ.
-Không cần tự chạy backend/go run, không cần Docker. Ctrl+C hoặc stop command dọn
-phiên. `--no-browser` dành cho QA. Certificate hết hạn cần gia hạn trước; script
-không tự thay cert/key.
+Từ thư mục gốc chạy `node scripts/dashboard-live.cjs`. Script tự mở Chrome lab
+riêng với certificate SPKI cho phép; dùng cửa sổ này cho HTTPS/HTTP2.
+Luồng: Chrome→Gateway18444→NestJS13001→PostgreSQL `dacn2`; Vite5173 chỉ UI/log.
+Không cần tự chạy backend/go run hoặc Docker. Không thay `.env` hay trust store.
 
-Đã kết nối API thật và log Gateway. Dừng server `npm run dev`
-cũ nếu đang chạy, rồi từ thư mục dự án:
+Mở /demo để đăng ký vào các môn có sẵn: CS101, NET301, SEC401, AI402, WEB201.
+Kết quả201 ghi thật; cùng mã và môn trả409 kể cả ở phiên sau. Đăng ký và số chỗ
+được giữ nguyên khi Ctrl+C hoặc `node scripts/dashboard-live.cjs stop`.
+Không tự thêm môn, không xoá đăng ký, không reset DB lúc bật/tắt. Chưa có lệnh
+reset dữ liệu trong lát cắt này. Đóng tab không dừng server.
 
-```powershell
-cd D:\DACN2
-node scripts/dashboard-live.cjs
-```
+Mở /dashboard → Dấu vân tay: Tín hiệu kết nối có JA4/JA4_r/JA4_o/JA4_ro,
+metadata H2, Akamai text/hash và request cùng connection ID. Thiếu quan sát có
+thông báo. 12 feature dự kiến có tìm kiếm, ý nghĩa tiếng Việt, đơn vị dự kiến,
+nguồn và lý do chưa tính; tất cả giá trị aggregate chưa có. Chưa thu dataset,
+chưa xuất CSV, chưa AI/policy/autoscaling. TLS versions/ALPN/GREASE chưa có
+trường JSON riêng cho UI, không đoán từ hash.
 
-Dùng hai tab tự mở trong Chrome lab: http://127.0.0.1:5173/demo để đăng ký và
-http://127.0.0.1:5173/dashboard để xem số liệu/nhật ký/dấu vân tay.
-Chọn môn, nhập mã giả lập và bấm **Đăng ký qua Gateway**: thành công201, đăng ký
-lại cùng mã409. Môn thứ ba có1chỗ để thử hết chỗ. Số chỗ lấy từ PostgreSQL thật.
-Chỉ3môn thử riêng của phiên trong dacn2_test được phép ghi; dữ liệu demo giữ nguyên.
+### Kiểm thử riêng, không ghi DB chính
 
-Luồng: Chrome→HTTPS Go Gateway18444→NestJS Windows13001→PostgreSQL.
-Đây là phiên native nhẹ, không cần Docker/K3s. JA4 và HTTP/2 thu từ kết nối
-Chrome trực tiếp. AI/chặn/scale vẫn chưa có; ô Pod chưa có
-quan sát. SSE cập nhật1s; hoàn tất/giây và p95 lấy log thật, không thay bằng mẫu
-khi mất kết nối. Đăng ký không tự retry nếu chưa biết kết quả.
-
-Dừng và dọn dữ liệu thử bằng Ctrl+C, hoặc từ terminal khác:
-
-```powershell
-node scripts/dashboard-live.cjs stop
-```
-
-Đợi thông báo Cleanup:true. Log/result/screenshot kiểm chứng nằm trong
-.local-backups/ui-live/. Đóng tab không tự dừng phiên. Nếu máy tắt đột ngột, cần
-kiểm tra lock/tiến trình/fixture theo DEPLOYMENT.md; không tự xoá dữ liệu khác.
-
-`npm run test:adapter` kiểm tra adapter không bật dịch vụ. `npm run test:live`
-chạy Chrome trên phiên live sạch đang mở; tạo đăng ký thật trong fixture, cần
-dừng phiên sau test để dọn. `npm run test:e2e` là bộ static cần cổng5173trống.
+Từ root chạy `node scripts/dashboard-live.cjs --test-db --no-browser`, rồi từ
+dashboard chạy `npm run test:live`. Bộ kiểm thử từ chối ghi nếu snapshot không
+phải dacn2_test. Dừng sau mỗi lượt để dọn3fixture (môn1chỗ đã được dùng hết).
+`Cleanup:true` của phiên mặc định chỉ việc dừng/đối soát, không phải xoá dữ liệu.
+Result/log nằm trong .local-backups/ui-live/. Lock/crash recovery xem DEPLOYMENT.md.
+`npm run test:e2e` là static E2E, cần5173trống.
 
 ## Bản giao diện mẫu — UI-01
 

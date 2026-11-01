@@ -85,6 +85,74 @@ test('logs are bounded, deduplicated, anonymized; completion windows and p95 are
   assert.ok(!JSON.stringify(s).includes('127.0.0.1'));
   assert.equal(a.snapshot(Date.parse('2026-10-31T12:01:00Z')).p95Ms, null);
 });
+test('fingerprint details preserve raw variants, observed zeros and empty lists; unsafe fields never reach UI', () => {
+  const a = createLiveAdapter({
+    sessionId: 'demo',
+    fixtureIds: ['1'],
+    database: 'dacn2',
+    requestGateway: async () => ({ status: 200 }),
+  });
+  a.ingest(
+    JSON.stringify({
+      event: 'gateway_tls',
+      schema_version: 1,
+      connection_id: 7,
+      ja4: 't13i_abc_def',
+      ja4_r: 't13i_1301_000a',
+      ja4_o: 't13i_aaa_bbb',
+      ja4_ro: '<script>SECRET</script>',
+      cookie: 'SECRET',
+    }) + '\n',
+  );
+  a.ingest(
+    JSON.stringify({
+      event: 'gateway_h2',
+      schema_version: 1,
+      connection_id: 7,
+      status: 'headers_observed',
+      settings: [{ id: 2, value: 0, secret: 'SECRET' }],
+      window_increment: 0,
+      priorities: [],
+      headers_priority: {
+        stream_id: 1,
+        dependency: 0,
+        exclusive: true,
+        weight: 256,
+        secret: 'SECRET',
+      },
+      pseudo_headers: [':method', ':path'],
+      akamai: { md5: 'a'.repeat(32), text: '2:0|0|0|m,p', secret: 'SECRET' },
+    }) + '\n',
+  );
+  a.ingest(JSON.stringify(event(1, { connection_id: 7 })) + '\n');
+  const s = a.snapshot(),
+    c = s.connections[0];
+  assert.equal(s.database, 'dacn2');
+  assert.equal(s.persistent, true);
+  assert.equal(c.ja4_r, 't13i_1301_000a');
+  assert.equal(c.ja4_ro, null);
+  assert.equal(c.h2.settings[0].value, 0);
+  assert.equal(c.h2.windowIncrement, 0);
+  assert.deepEqual(c.h2.priorities, []);
+  assert.equal(c.h2.headersPriority.weight, 256);
+  assert.equal(c.h2.text, '2:0|0|0|m,p');
+  assert.ok(!JSON.stringify(s).includes('SECRET'));
+  a.ingest(
+    JSON.stringify({
+      event: 'gateway_h2',
+      schema_version: 1,
+      connection_id: 7,
+      status: 'invalid',
+      settings: Array(65).fill({ id: 1, value: 1 }),
+      pseudo_headers: [':method', 'SECRET'],
+      window_increment: -1,
+    }) + '\n',
+  );
+  const invalid = a.snapshot().connections[0].h2;
+  assert.equal(invalid.settings, null);
+  assert.equal(invalid.windowIncrement, null);
+  assert.equal(invalid.pseudoHeaders, null);
+});
 test('fragmented logs, malformed input and fingerprint provenance never invent identity', () => {
   const a = make(),
     line = JSON.stringify(event(1));

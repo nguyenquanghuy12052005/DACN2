@@ -1,5 +1,22 @@
 # Lab API contracts — backend and Gateway
 
+## UI-03c additive dashboard contract — 2026-11-01
+
+The local dashboard runner defaults to persistent `dacn2`; it reuses existing
+canonical courses and keeps registrations on shutdown. `--test-db` retains the
+old disposable QA lifecycle. Direct Gateway session auth/CORS/allowlisted IDs
+and request API remain unchanged; backend `.env` is not modified.
+
+Local snapshot schema1 adds `database: dacn2|dacn2_test`, `persistent: boolean`;
+`backendMode` is `native-demo-db` or `native-test-db`. Connection fields add nullable
+`ja4_r`, `ja4_o`, `ja4_ro`; H2 adds nullable `text`, `settings[{id,value}]`,
+`windowIncrement`, `priorities[{stream_id,dependency,exclusive,weight}]`,
+`headersPriority`, `pseudoHeaders`. Raw JA4 strings are bounded to8192chars,
+original hash100, Akamai text4096; arrays capped64settings/32priorities/16pseudo
+names. Only validated allowlisted properties are exposed. Null means unavailable;
+0 and [] preserve actual observations. No new model-feature/window/CSV API.
+
+
 Updated: 2026-10-30. Backend contract and Gateway M1-04 health/event behavior
 are implemented and verified locally. User Gateway restart is needed to load
 the new source; execution evidence and scope limits are at the end.

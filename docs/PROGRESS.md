@@ -1,6 +1,74 @@
 # DACN2 — checkpoint tiếp tục dự án
 
-Cập nhật: 31/10/2026 (Asia/Bangkok). **M1 hoàn thành trong phạm vi lab local đã kiểm chứng.** Cluster giữ STOPPED, M2 chưa bắt đầu. Tracker duy nhất: tasks/current.md.
+Cập nhật: 01/11/2026 (Asia/Bangkok). **M1 hoàn thành trong phạm vi lab local đã kiểm chứng.** Cluster giữ STOPPED, M2 chưa bắt đầu. Tracker duy nhất: tasks/current.md.
+
+## CLEAN-02 COMPLETE — code organization and disposable artifacts (2026-11-01)
+
+- User requested code cleanup/folder organization and a short code explanation.
+  M1 remains local complete; this is maintenance, not M2 implementation.
+- Scripts entrypoints remain at scripts/ so dashboard-live/backend-lab/integration/
+  benchmark commands are unchanged. Shared modules moved to scripts/lib/;
+  script regressions moved to scripts/tests/. Runtime/test imports and current
+  README/deployment commands updated. Local reproducibility helpers referencing
+  the moved modules updated; historical checkpoints retain their old paths.
+- Removed unreachable mock=false branches inside MockDemo, which only renders
+  in mock mode. Existing tests preserved. Backend/Gateway source, schema,
+  dependencies/env/cert/DB data and K3s resource settings unchanged.
+- Deleted1765 disposable files/726.15MiB: profiles from stopped clean UI sessions,
+  old session Gateway binaries, duplicate backend image archives (same SHA256).
+  Kept newest session binary, each distinct backend archive, PostgreSQL archive,
+  tools, source backups/DB backups/captures/logs/results/screenshots/kubeconfig.
+  Verified558 retained backup/evidence files by SHA256. Manifest:
+  .local-backups/cleanup-20261101/result.json. Initial count double-enumerated
+  individual file targets; corrected manifest, no additional deletion.
+- Verification: frontend build/typecheck/lint+6React tests PASS;14Node tests PASS
+  (scripts/tests/dashboard-data.test.cjs, scripts/tests/lab-command.test.cjs,
+  dashboard/server/live-adapter.test.cjs);4staticChrome tests PASS; actualChrome
+  directHTTPS/H2 registration201/duplicate-full409/fingerprints/features/axe/
+  responsive PASS. QA session1793533492197 stopped cleanup:true (DBhash unchanged).
+  Entrypoint/import syntax and module moves reviewed. No new cluster/load,
+  full Go/backend suites, hosted CI, model/dataset or production validation.
+- Root README now has Vietnamese folder map, key-file responsibilities and
+  reading order. Used code-simplification guidance at project pin eb07f19f...
+  (web fetch succeeded after shell DNS failure). No commit/push; previous local
+  changes preserved. User self-runs node scripts/dashboard-live.cjs.
+
+## UI-03c COMPLETE — lưu demo lâu dài và giải thích feature (01/11/2026)
+
+- User chọn chỉ bước1–2; bước3 thu dataset/CSV làm sau. Default
+  `node scripts/dashboard-live.cjs` nay dùng `dacn2`, lấy5môn canonical có sẵn,
+  giữ ID/môn/đăng ký/số chỗ qua stop/start. Không insert fixture hoặc DELETE dữ
+  liệu nghiệp vụ trong mode này; không đổi backend/.env, schema, grants hoặc
+  Gateway/AI source. Không có lệnh reset trong slice. Stop chỉ dừng dịch vụ.
+- `--test-db` giữ lifecycle QA fixture trong dacn2_test; live write test kiểm tra
+  DB trước mọi POST. Setup fixture có transaction; cleanup kiểm ownership trước
+  DELETE. Snapshot/UI ghi đúng DB và persistent, native mode vẫn không K3s.
+- Dấu vân tay có2view: tín hiệu kết nối với đủ4JA4, H2 SETTINGS/window/priority/
+  pseudo-order/Akamai text+hash và request liên quan; danh mục12feature tìm kiếm
+  được, mỗi mục có ý nghĩa/đơn vị dự kiến/nguồn/lý do chưa tính. Metadata được
+  allowlist+bounded; missing khác0/[]; TLS versions/ALPN/GREASE chưa có trường
+  structured UI nên ghi unavailable. 12giá trị aggregate đều chưa triển khai;
+  không lấy Gateway total latency làm t_up. Metadata CSV chỉ giải thích dự kiến.
+- Verification: frontend typecheck/build/lint PASS;6RTL PASS;5adapter+3data-lifecycle
+  regression PASS;4static Chrome tests PASS (3routes×3viewports, axe/theme/keyboard).
+  Actual Chrome direct HTTPS/H2/testDB PASS201/duplicate409/full409, all4JA4/rawH2,
+  feature12items/t_up reason, axe/nooverflow, screenshots1366/1920/390.
+  QA sessions1793531606009 và1793531833818 stop cleanup:true, cả2DBhash giữ nguyên.
+  Một lần rerun trên fixture1chỗ đã dùng hết trả409 đúng thiết kế; rerun phiên sạch PASS.
+- Evidence main read-only: .local-backups/ui03c/main-readonly-1793531917813/result.json,
+ 2lần runner main start/stop có stable5courses/seats, database=dacn2/persistent=true,
+  before/after hashes cả2DBkhớp. Không automated POST vào DBchính.
+  Evidence retention: .local-backups/ui03c/retention-testdb-1793531993898/result.json:
+  API201→backendstop→nhánh persistent cleanup không DELETE→restart đọc count1/
+  duplicate409. Chỉ dùng testDB fixture, cleanup:true/hashkhớp. Điều này kiểm
+  chứng lưu đăng ký thật qua restart mà không thêm bản ghi QA vào dacn2.
+- Sandbox initial DBconnect EACCES và Vitest temp EPERM; rerun ngoài sandbox PASS.
+  Skill incremental-implementation pinned không tải được (DNS/cachemiss), không
+  claim đã áp dụng mới. Dùng project rules/checks. Tất cả phiênQA/mainproof đã
+  stop; user tự chạy lệnh default để mở Chrome demo. UI-02/K3sUI/M2 chưa bắt đầu;
+  hostedCI/academicacceptance vẫn pending. Không commit/push hoặc phát tải.
+  Screenshots đã xem desktop signals/mobile features, giữ tại .local-backups/ui03c/screenshots/.
+  Các checkpoint dacn2_test/fixture cleanup bên dưới là lịch sử UI-03b.
 
 ## Đọc trước ở chat mới — điểm dừng hiện tại
 

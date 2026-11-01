@@ -4,7 +4,7 @@ const https = require('node:https'), http2 = require('node:http2'), net = requir
 const { X509Certificate } = require('node:crypto');
 const { spawn, spawnSync } = require('node:child_process');
 const { setTimeout: delay } = require('node:timers/promises');
-const { runCommand } = require('./lab-command.cjs');
+const { runCommand } = require('./lib/lab-command.cjs');
 const root = path.resolve(__dirname, '..');
 const { Client } = require(path.join(root, 'backend/node_modules/pg'));
 const env = require(path.join(root, 'backend/node_modules/dotenv')).parse(fs.readFileSync(path.join(root, 'backend/.env')));

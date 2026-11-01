@@ -1,5 +1,31 @@
 # Dashboard data mapping — UI-00
 
+## UI-03c — persistent demo and feature explorer (2026-11-01)
+
+Current override: default `node scripts/dashboard-live.cjs` uses `dacn2`, reads
+existing canonical courses CS101/NET301/SEC401/AI402/WEB201 and permits browser
+writes only to their IDs through the existing session boundary. No automatic
+seed, fixture insertion, reset or deletion in this mode. Registration rows and
+seat counters persist when stopping and starting. Course IDs remain stable.
+`--test-db` explicitly selects disposable fixtures in `dacn2_test`; the write
+browser suite refuses any other database before submitting. Backend source/env,
+Gateway algorithms, certificate handling and K3s remain unchanged.
+
+Snapshot schema1 additions: `database`, `persistent`, `backendMode=native-demo-db`
+for persistent mode. Connections additionally expose sanitized `ja4_r`, `ja4_o`,
+`ja4_ro` and H2 `settings`, `windowIncrement`, `priorities`, `headersPriority`,
+`pseudoHeaders`, `text`. Numeric zero and observed empty lists remain distinct
+from null. Values are bounded and allowlisted, with no raw headers, query,
+student codes or bodies. Session/connection joins and retention limits remain.
+
+The fingerprint explorer has connection signals and a searchable 12-feature
+inventory with meanings, provisional units, intended sources and missing-work
+reasons. All 12 aggregate values remain unavailable: no M2 window aggregator,
+final formulas, labels, dataset or CSV export was implemented. TLS offered
+versions/ALPN/GREASE have no dedicated structured UI fields yet and are explicitly
+unavailable. Request latency is total Gateway latency, never relabeled `t_up`.
+
+
 ## UI-03b current direct-browser override — 2026-10-31
 
 Supersedes the earlier proxy slice below. New live sessions send fetch directly

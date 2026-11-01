@@ -20,6 +20,15 @@ test('actual Chrome → HTTPS Gateway HTTP2 → NestJS, fingerprint correlation 
       proxyCalls.push(request.url());
   });
   await page.goto('/demo');
+  // Never let this write test run against persistent demo data.
+  const configuration = await (
+    await page.request.get('/api/live/snapshot')
+  ).json();
+  expect(
+    configuration.database,
+    'Start runner with --test-db for write tests',
+  ).toBe('dacn2_test');
+  expect(configuration.persistent).toBe(false);
   await expect(
     page.getByText('TRỰC TIẾP · CHROME → GATEWAY', { exact: true }),
   ).toBeVisible();
@@ -80,6 +89,28 @@ test('actual Chrome → HTTPS Gateway HTTP2 → NestJS, fingerprint correlation 
   );
   await expect(page.getByRole('tabpanel')).toContainText(connection.ja4);
   await expect(page.getByRole('tabpanel')).toContainText('headers_observed');
+  await expect(page.getByRole('tabpanel')).toContainText('JA4_ro');
+  await expect(page.getByRole('tabpanel')).toContainText('SETTINGS');
+  expect(connection.ja4_r).toBeTruthy();
+  expect(connection.ja4_o).toBeTruthy();
+  expect(connection.ja4_ro).toBeTruthy();
+  expect(connection.h2.settings.length).toBeGreaterThan(0);
+  expect(connection.h2.text).toBeTruthy();
+  await page.screenshot({
+    path: testInfo.outputPath('live-signals.png'),
+    fullPage: true,
+  });
+  await page
+    .getByRole('button', { name: '12 feature dự kiến', exact: true })
+    .click();
+  await expect(page.locator('.feature-catalog > details')).toHaveCount(12);
+  await page
+    .locator('.feature-catalog summary')
+    .filter({ hasText: 't_up' })
+    .click();
+  await expect(page.getByRole('tabpanel')).toContainText(
+    'chưa có phép đo upstream riêng',
+  );
   expect(
     (
       await new AxeBuilder({ page })
@@ -98,6 +129,18 @@ test('actual Chrome → HTTPS Gateway HTTP2 → NestJS, fingerprint correlation 
     path: testInfo.outputPath('live-fingerprints.png'),
     fullPage: true,
   });
+  for (const width of [1920, 390]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 1080 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: testInfo.outputPath(`features-${width}.png`),
+      fullPage: true,
+    });
+  }
   const forbidden = await page.request.post(
     '/api/live/courses/999/registrations',
     { headers: { 'X-DACN2-UI': '1' }, data: { studentCode: 'NO' } },

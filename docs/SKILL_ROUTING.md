@@ -15,6 +15,11 @@ Source: [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills). T
 - Retrieve only relevant files from `https://raw.githubusercontent.com/addyosmani/agent-skills/<commit-sha>/skills/<name>/SKILL.md`; preserve relative supporting-reference paths.
 - No skills were installed by this documentation update. If retrieval fails, disclose the gap and use existing project guidance where sufficient; do not claim the skill was applied.
 
+- CLEAN-02 (2026-11-01): `skills/code-simplification/SKILL.md` at the same
+  immutable eb07f19f52c2669f2364897aaa293e2aaddd7b1c pin retrieved/read via web.
+  Applied behavior-preserving mock-branch removal and scoped organization.
+  Existing project instructions govern commits and approvals.
+
 ## Loading protocol and document mapping
 
 UI-01 (2026-10-31) reused incremental-implementation at pinned eb07f19f52c2669f2364897aaa293e2aaddd7b1c;

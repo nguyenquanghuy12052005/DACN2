@@ -168,7 +168,7 @@ export function App() {
                 {mock
                   ? 'DỮ LIỆU GIẢ LẬP · Chỉ để xem giao diện.'
                   : live.connected
-                    ? `Chrome → HTTPS Gateway → NestJS Windows → DB test · cập nhật ${new Date(live.snapshot!.observedAt).toLocaleTimeString('vi-VN')}`
+                    ? `Chrome → HTTPS Gateway → NestJS Windows → ${live.snapshot!.database} · cập nhật ${new Date(live.snapshot!.observedAt).toLocaleTimeString('vi-VN')}`
                     : 'Chưa kết nối nguồn trực tiếp. Không thay bằng dữ liệu mẫu.'}
               </span>
             </div>

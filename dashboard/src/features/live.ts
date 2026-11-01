@@ -16,6 +16,8 @@ export interface LiveSnapshot {
   schemaVersion: 1;
   source: 'live';
   sessionId: string;
+  database: 'dacn2' | 'dacn2_test';
+  persistent: boolean;
   transport: 'proxy' | 'direct-browser';
   observedAt: string;
   gatewayHealth: boolean | null;
@@ -30,9 +32,28 @@ export interface LiveSnapshot {
   connections: {
     connectionId: number;
     ja4: string | null;
-    h2: { status: string; akamai: string | null; reason: string | null } | null;
+    ja4_r: string | null;
+    ja4_o: string | null;
+    ja4_ro: string | null;
+    h2: {
+      status: string;
+      akamai: string | null;
+      reason: string | null;
+      text: string | null;
+      settings: { id: number; value: number }[] | null;
+      windowIncrement: number | null;
+      priorities: H2Priority[] | null;
+      headersPriority: H2Priority | null;
+      pseudoHeaders: string[] | null;
+    } | null;
   }[];
   series: { time: string; value: number }[];
+}
+export interface H2Priority {
+  stream_id: number;
+  dependency: number;
+  exclusive: boolean;
+  weight: number;
 }
 export interface LiveState {
   snapshot: LiveSnapshot | null;

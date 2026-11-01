@@ -1,8 +1,84 @@
 # DACN2 — L7 cyber-defense lab
 
-Status (2026-10-30): **M1 complete in the controlled local lab scope.** HTTPS/H2 Gateway → one K3s backend Pod → Windows PostgreSQL, test-DB writes/races/recovery and one-Pod read benchmark verified. C_work319req/s for the recorded500m/192Mi read profile, with20%headroom; saturation not reached at400RPS. M2 feature/window collector/dataset remains next. HostedCI and academic acceptance questions remain; see [current work](tasks/current.md).
+Status (2026-11-01): **M1 complete in the controlled local lab scope.** HTTPS/H2 Gateway → one K3s backend Pod → Windows PostgreSQL, test-DB writes/races/recovery and one-Pod read benchmark verified. C_work319req/s for the recorded500m/192Mi read profile, with20%headroom; saturation not reached at400RPS. M2 feature/window collector/dataset remains next. HostedCI and academic acceptance questions remain; see [current work](tasks/current.md).
 
 The planned system uses a Go HTTPS Gateway, Python/FastAPI ML control plane, and NestJS/PostgreSQL backend on K3s. It distinguishes Normal, Flash Crowd, Pure L7 DDoS, and Mixed Traffic; applies per-client mitigation; and scales backend Pods from measured admitted RPS. Prometheus/Grafana expose actual behavior.
+
+## Chạy demo đang dùng
+
+Từ `D:\DACN2` chạy `node scripts/dashboard-live.cjs`. Script tự mở Chrome lab,
+chạy Vite + Gateway + NestJS native; PostgreSQL Windows cần có sẵn. Đăng ký vào
+`dacn2` được giữ sau khi dừng. Đây chưa phải đường K3s/AI/autoscaling.
+Dừng bằng Ctrl+C hoặc `node scripts/dashboard-live.cjs stop`.
+Xem [hướng dẫn dashboard](dashboard/README.md) và [triển khai/phục hồi](docs/DEPLOYMENT.md).
+
+## Bản đồ code: đọc file nào trước?
+
+```text
+DACN2/
+├─ dashboard/               Giao diện React và bộ nối log trực tiếp
+│  ├─ src/app/              Khung trang, điều hướng, theme, nguồn Live/Mock
+│  ├─ src/pages/            Các màn hình đăng ký, tổng quan, mô phỏng
+│  ├─ src/components/       Thành phần giao diện dùng lại
+│  ├─ src/features/         Kết nối Live và danh mục feature model
+│  ├─ src/mocks/            Dữ liệu mẫu có nhãn, không phải dữ liệu train
+│  ├─ src/styles/           Kiểu giao diện chung và bố cục gọn
+│  ├─ src/tests/            Kiểm thử component React
+│  ├─ server/               Đọc log Gateway, kiểm tra dữ liệu, phát SSE cho UI
+│  ├─ e2e/                  Kiểm thử giao diện mẫu bằng Chrome
+│  └─ e2e-live/             Kiểm thử luồng thật, chỉ ghi dacn2_test
+├─ gateway/                 Go: HTTPS, reverse proxy, TLS/H2 fingerprint, telemetry
+├─ backend/                 NestJS: API môn học, đăng ký và giao dịch PostgreSQL
+│  ├─ src/                  5 file ứng dụng
+│  ├─ database/migrations/  SQL tạo bảng, seed và sửa dữ liệu đã có
+│  └─ test/                 Unit/E2E và fixture riêng
+├─ scripts/                 Các lệnh vận hành được gọi từ thư mục gốc
+│  ├─ lib/                  Hàm dùng chung, không chạy trực tiếp
+│  └─ tests/                Kiểm thử hàm dùng chung, không bật cluster
+├─ kubernetes/              Manifest triển khai backend lên K3s
+├─ docs/                    Đặc tả, kiến trúc, cách chạy và bằng chứng tiến độ
+├─ tasks/current.md         Tracker công việc duy nhất
+└─ .local-backups/          Backup/evidence/công cụ local, không đưa lên Git
+```
+
+Luồng đọc code từ thao tác người dùng tới database:
+
+1. **`scripts/dashboard-live.cjs`** bật/tắt các dịch vụ riêng của demo, chọn DB,
+   tạo phiên và mở Chrome. **`scripts/lib/dashboard-data.cjs`** chọn môn ổn định
+   trong DB chính hoặc tạo/dọn fixture ở DB test.
+2. **`dashboard/src/pages/Demo.tsx`** nhận thao tác chọn môn/đăng ký;
+   **`src/features/live.ts`** gửi HTTPS tới Gateway và nhận snapshot qua SSE.
+3. **`gateway/main.go`** nối các thành phần, mở HTTPS;
+   **`config.go`** kiểm tra địa chỉ/cấu hình;
+   **`browser_lab.go`** giới hạn origin, token phiên, môn được phép và tần suất.
+4. **`gateway/telemetry.go`** reverse proxy tới backend, tạo request ID, ghi
+   status/latency/lỗi. **`ja4.go`** tính4biến thể JA4;
+   **`h2_initial.go`** đọc SETTINGS; **`h2_frames.go`** đọc frame/HPACK có giới hạn;
+   **`h2_live.go`** quản lý observer và connection ID;
+   **`akamai.go`** tạo chuỗi/hash fingerprint H2.
+5. **`backend/src/main.ts`** khởi động NestJS;
+   **`app.module.ts`** nối controller/service;
+   **`courses.controller.ts`** định tuyến và kiểm tra input;
+   **`courses.service.ts`** đọc môn, đăng ký có transaction/chống trùng/hết chỗ;
+   **`database.service.ts`** quản lý pool PostgreSQL.
+6. **`dashboard/server/live-adapter.cjs`** lọc log và nối request với fingerprint,
+   phát snapshot SSE. **`src/pages/Overview.tsx`** hiển thị số liệu/nhật ký;
+   **`src/components/FingerprintPanel.tsx`** giải thích fingerprint;
+   **`src/features/model-features.ts`** mô tả12feature dự kiến, chưa tính/train.
+
+Các script lab có mục đích riêng:
+
+- **`scripts/backend-lab.cjs`** vận hành backend trong K3s.
+- **`scripts/m1-integration.cjs`** kiểm chứng Gateway→Pod→DB, lỗi và phục hồi.
+- **`scripts/benchmark-m1.cjs`** đo tải lab có giới hạn; không phải lệnh demo UI.
+- **`scripts/lib/lab-command.cjs`** chạy tiến trình con có timeout và che secrets.
+- **`kubernetes/backend.yaml`** khai báo namespace, Deployment và Service.
+
+File `*_test.go`, `*.test.cjs`, `*.spec.ts(x)` là kiểm thử, không phải code dư.
+Go giữ source và tests cạnh nhau theo thông lệ package; không tách mỗi file thành
+một folder. `node_modules` là thư viện đã cài; `dist` là bản build tạo lại được.
+Env thật/cert/key, backup DB, captures và evidence phải được giữ riêng, không commit.
+**Chưa có service AI hay collector dataset**; chưa tạo folder rỗng cho phần chưa làm.
 
 ## Start here
 

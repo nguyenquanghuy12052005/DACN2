@@ -1,5 +1,21 @@
 # Architecture and decisions
 
+## UI-03c decision — persistent demo and explanatory feature UI (2026-11-01)
+
+User authorized steps1–2 only; dataset/export step3 deferred. Reuse existing
+canonical courses in `dacn2` without changing app-role privileges, migrations,
+backend env or API. Shutdown of the default dashboard session never deletes
+business data; QA explicitly uses `--test-db` and owns disposable fixtures.
+No reset command is provided in this slice, so stopping cannot be mistaken for
+resetting. Keep browser capability/ID allowlist and existing native topology.
+
+The fingerprint explorer forwards already emitted structured JA4 variants/H2
+metadata after validation. It describes all 12 planned aggregate features while
+honestly leaving their values unavailable. Do not equate request total latency
+with upstream-only latency or treat the current completion buckets as M2 windows.
+This is UI/data-lifecycle completion, not M2 or production completion.
+
+
 Updated: 2026-10-30. Status: M1 local lab scope complete: HTTPS Gateway/JA4/H2/
 telemetry → backendPod → WindowsPG, testDBwrites/races/recovery and one-Pod baseline
 verified. Working C319req/s for stated read-only profile, not maximum capacity.

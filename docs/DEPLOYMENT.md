@@ -1,5 +1,41 @@
 # Deployment and recovery
 
+## Current dashboard procedure — UI-03c (2026-11-01)
+
+Default persistent demo (native, PostgreSQL Windows required, no Docker/K3s):
+
+```powershell
+node scripts/dashboard-live.cjs
+```
+
+Use the dedicated pinned Chrome window. Existing canonical courses in `dacn2`
+are shown. Registrations and seat counts survive Ctrl+C or
+`node scripts/dashboard-live.cjs stop`, and remain on next start. Same code+course
+continues to return409 across sessions. No automatic reset, course insertion,
+DB grant or `.env` edit. Missing seed courses cause an actionable refusal.
+`Cleanup:true` means session shutdown checks succeeded; in persistent mode it
+does NOT mean deletion of business data. Inspect `database` and `persistent` in
+result.json. Existing lock/busy-port/crash recovery rules remain; never delete
+course data to recover a lock. There is no reset command in this slice.
+
+For automated write QA only, start a separate clean session:
+
+```powershell
+node scripts/dashboard-live.cjs --test-db --no-browser
+```
+
+Then run `npm run test:live` from dashboard/. The test checks snapshot.database
+before any write. Stop after EACH run to restore test fixtures; its one-seat
+course is consumed by the full-course test. Test sessions preserve both DB row
+hashes after cleanup. Do not run static E2E while a live session owns5173.
+`node --test scripts/tests/dashboard-data.test.cjs dashboard/server/live-adapter.test.cjs`
+checks persistence separation/ownership/metadata without starting services.
+
+Open Dashboard → Dấu vân tay → Tín hiệu kết nối or 12 feature dự kiến. Feature
+values are explicitly not computed; explanations are visible even disconnected.
+No dataset/CSV output or bulk traffic is enabled.
+
+
 Updated: 2026-10-30. M1-05c backend container smoke and M1-05e empty K3s cluster
 trial and M1-05f actual Pod-to-WindowsDB read-only probe verified on this Windows
 Docker Desktop host. M1-05g backend Deployment/Service read smoke also verified;
@@ -414,7 +450,7 @@ arbitrary stdout/stderr. Plaintext/base64 credentials are redacted in failures.
 Regression checks need no Docker/DB/service startup or load:
 
 ```powershell
-node --test scripts/lab-command.test.cjs
+node --test scripts/tests/lab-command.test.cjs
 ```
 
 Six checks cover RAM refusal/cause/evidence, secret redaction, successful stdin/

@@ -22,9 +22,9 @@ export function Demo({
   mock: boolean;
   live?: LiveState;
 }) {
-  return mock ? <MockDemo mock /> : <LiveDemo live={live} />;
+  return mock ? <MockDemo /> : <LiveDemo live={live} />;
 }
-function MockDemo({ mock }: { mock: boolean }) {
+function MockDemo() {
   const [selected, setSelected] = useState<string>(courses[0].id);
   const [studentCode, setStudentCode] = useState('');
   const [previewed, setPreviewed] = useState(false);
@@ -48,48 +48,40 @@ function MockDemo({ mock }: { mock: boolean }) {
           <SectionTitle
             eyebrow="DANH SÁCH MÔN HỌC"
             title="Chọn môn bạn muốn học"
-            aside={
-              <Badge tone="amber">
-                {mock ? 'MÔN HỌC MẪU' : 'CHƯA CÓ DỮ LIỆU'}
-              </Badge>
-            }
+            aside={<Badge tone="amber">MÔN HỌC MẪU</Badge>}
           />
-          {mock ? (
-            <div className="course-grid">
-              {courses.map((c) => (
-                <button
-                  key={c.id}
-                  className={`course-card ${c.tone} ${selected === c.id ? 'selected' : ''}`}
-                  aria-pressed={selected === c.id}
-                  onClick={() => {
-                    setSelected(c.id);
-                    setPreviewed(false);
-                  }}
-                >
-                  <span className="course-top">
-                    <BookOpen size={24} strokeWidth={1.4} />
-                    <span className="course-code">{c.code}</span>
-                  </span>
-                  <span className="eyebrow">{c.category}</span>
-                  <strong>{c.name}</strong>
-                  <span className="seat-line">
-                    {c.seats ? `${c.seats} chỗ còn lại` : 'Đã hết chỗ'}
-                    {selected === c.id && <Check size={16} />}
-                  </span>
-                  <span className="seat-track">
-                    <span
-                      style={{
-                        width: `${(100 * (c.capacity - c.seats)) / c.capacity}%`,
-                      }}
-                    />
-                  </span>
-                  <small>Dữ liệu mẫu · {c.capacity} chỗ tổng cộng</small>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <Unavailable description="Chưa kết nối API môn học. Chế độ trực tiếp không hiển thị môn mẫu." />
-          )}
+          <div className="course-grid">
+            {courses.map((c) => (
+              <button
+                key={c.id}
+                className={`course-card ${c.tone} ${selected === c.id ? 'selected' : ''}`}
+                aria-pressed={selected === c.id}
+                onClick={() => {
+                  setSelected(c.id);
+                  setPreviewed(false);
+                }}
+              >
+                <span className="course-top">
+                  <BookOpen size={24} strokeWidth={1.4} />
+                  <span className="course-code">{c.code}</span>
+                </span>
+                <span className="eyebrow">{c.category}</span>
+                <strong>{c.name}</strong>
+                <span className="seat-line">
+                  {c.seats ? `${c.seats} chỗ còn lại` : 'Đã hết chỗ'}
+                  {selected === c.id && <Check size={16} />}
+                </span>
+                <span className="seat-track">
+                  <span
+                    style={{
+                      width: `${(100 * (c.capacity - c.seats)) / c.capacity}%`,
+                    }}
+                  />
+                </span>
+                <small>Dữ liệu mẫu · {c.capacity} chỗ tổng cộng</small>
+              </button>
+            ))}
+          </div>
           <div className="client-path">
             <span>Trình duyệt</span>
             <ArrowRight size={15} />
@@ -118,12 +110,7 @@ function MockDemo({ mock }: { mock: boolean }) {
           >
             <label>
               Môn đã chọn
-              <input
-                readOnly
-                value={
-                  mock ? `${course.code} · ${course.name}` : 'Chưa có dữ liệu'
-                }
-              />
+              <input readOnly value={`${course.code} · ${course.name}`} />
             </label>
             <label htmlFor="student-code">Mã người tham gia giả lập</label>
             <input
@@ -138,23 +125,18 @@ function MockDemo({ mock }: { mock: boolean }) {
               }}
               placeholder="Ví dụ: DEMO001"
               required
-              disabled={!mock}
             />
             <small>
               1–30 chữ cái không dấu, số, dấu gạch dưới hoặc gạch ngang.
             </small>
-            <button
-              className="button primary full"
-              type="submit"
-              disabled={!mock}
-            >
+            <button className="button primary full" type="submit">
               Xem trước yêu cầu <ArrowRight size={16} />
             </button>
             <button className="button secondary full" type="button" disabled>
               <LockKeyhole size={15} /> Đăng ký qua Gateway · chưa kết nối
             </button>
           </form>
-          {previewed && mock && (
+          {previewed && (
             <div role="status" className="request-preview">
               <strong>Chỉ xem trước — chưa gửi yêu cầu HTTP</strong>
               <code>POST /courses/:id/registrations</code>
@@ -252,7 +234,11 @@ function LiveDemo({ live }: { live: LiveState }) {
             Đăng ký trực tiếp<span className="heading-dot">.</span>
           </h1>
           <p>
-            Yêu cầu thật qua Gateway · chỉ ghi môn thử riêng trong dacn2_test.
+            Yêu cầu thật qua Gateway ·{' '}
+            {live.snapshot?.database ?? 'chưa kết nối DB'} ·{' '}
+            {live.snapshot?.persistent
+              ? 'giữ đăng ký sau khi dừng phiên.'
+              : 'fixture QA được dọn khi dừng.'}
           </p>
         </div>
         <Badge tone="amber">HTTPS TRỰC TIẾP</Badge>
@@ -260,7 +246,7 @@ function LiveDemo({ live }: { live: LiveState }) {
       <div className="demo-layout">
         <Panel>
           <SectionTitle
-            title="Môn học của phiên thử"
+            title="Danh sách môn học"
             aside={
               <Badge>{live.connected ? 'API thực' : 'Chưa kết nối'}</Badge>
             }
@@ -290,7 +276,9 @@ function LiveDemo({ live }: { live: LiveState }) {
                     <BookOpen size={24} />
                     <span className="course-code">ID {c.id}</span>
                   </span>
-                  <span className="eyebrow">DỮ LIỆU THẬT · DB TEST</span>
+                  <span className="eyebrow">
+                    DỮ LIỆU THẬT · {live.snapshot?.database ?? 'CHƯA KẾT NỐI'}
+                  </span>
                   <strong>{c.name}</strong>
                   <span className="seat-line">
                     {c.availableSeats} chỗ còn lại{' '}
@@ -314,13 +302,21 @@ function LiveDemo({ live }: { live: LiveState }) {
           )}
           <p className="quiet-note">
             Trình duyệt → HTTPS Go Gateway → NestJS Windows → PostgreSQL. Không
-            có K3s trong phiên nhẹ này. Đóng phiên bằng Ctrl+C để dọn các môn và
-            đăng ký thử.
+            có K3s trong phiên nhẹ này.{' '}
+            {live.snapshot?.persistent
+              ? 'Ctrl+C chỉ dừng dịch vụ, giữ nguyên môn học và đăng ký.'
+              : 'Ctrl+C dọn fixture QA của phiên.'}
           </p>
         </Panel>
         <Panel className="registration-panel">
           <h2>Đăng ký học phần</h2>
-          <p>Thao tác sẽ được backend xử lý và lưu vào database test.</p>
+          <p>
+            Thao tác được backend lưu vào{' '}
+            {live.snapshot?.database ?? 'DB của phiên'}.{' '}
+            {live.snapshot?.persistent
+              ? 'Cùng mã và cùng môn đã đăng ký sẽ trả lỗi trùng, kể cả qua phiên mới.'
+              : 'Đây là phiên QA tạm thời.'}
+          </p>
           <form
             onSubmit={(e) => {
               e.preventDefault();

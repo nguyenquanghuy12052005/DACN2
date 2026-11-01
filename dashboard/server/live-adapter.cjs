@@ -7,7 +7,34 @@ function createLiveAdapter({
   requestGateway,
   captureStartedAt = Date.now(),
   directConfig = null,
+  database = 'dacn2_test',
 }) {
+  if (!['dacn2', 'dacn2_test'].includes(database))
+    throw Error('Invalid demo database');
+  const text = (value, max = 8192) =>
+    typeof value === 'string' &&
+    value.length <= max &&
+    /^[a-zA-Z0-9_:,;|./-]*$/.test(value)
+      ? value
+      : null;
+  const uint = (v, max = 0xffffffff) =>
+    Number.isInteger(v) && v >= 0 && v <= max;
+  const priority = (p) =>
+    p &&
+    uint(p.stream_id, 0x7fffffff) &&
+    uint(p.dependency, 0x7fffffff) &&
+    typeof p.exclusive === 'boolean' &&
+    uint(p.weight, 256) &&
+    p.weight > 0
+      ? {
+          stream_id: p.stream_id,
+          dependency: p.dependency,
+          exclusive: p.exclusive,
+          weight: p.weight,
+        }
+      : null;
+  const list = (v, max, validate) =>
+    Array.isArray(v) && v.length <= max && v.every(validate) ? v : null;
   const events = [],
     fingerprints = [],
     clients = new Set();
@@ -25,7 +52,14 @@ function createLiveAdapter({
   function connection(id) {
     if (!Number.isSafeInteger(id) || id <= 0) return null;
     if (!connections.has(id)) {
-      connections.set(id, { connectionId: id, ja4: null, h2: null });
+      connections.set(id, {
+        connectionId: id,
+        ja4: null,
+        ja4_r: null,
+        ja4_o: null,
+        ja4_ro: null,
+        h2: null,
+      });
       if (connections.size > 128)
         connections.delete(connections.keys().next().value);
     }
@@ -51,7 +85,12 @@ function createLiveAdapter({
             /^[a-z0-9_]{1,100}$/.test(e.ja4 || '')
           ) {
             const c = connection(e.connection_id);
-            if (c) c.ja4 = e.ja4;
+            if (c) {
+              c.ja4 = e.ja4;
+              c.ja4_r = text(e.ja4_r);
+              c.ja4_o = text(e.ja4_o, 100);
+              c.ja4_ro = text(e.ja4_ro);
+            }
             continue;
           }
           if (e.event === 'gateway_h2' && e.schema_version === 1) {
@@ -72,6 +111,26 @@ function createLiveAdapter({
                 reason: /^[a-z_]{1,60}$/.test(e.akamai_reason || e.reason || '')
                   ? e.akamai_reason || e.reason
                   : null,
+                text: text(e.akamai?.text, 4096),
+                settings:
+                  list(
+                    e.settings,
+                    64,
+                    (s) => s && uint(s.id, 65535) && uint(s.value),
+                  )?.map((s) => ({ id: s.id, value: s.value })) ?? null,
+                windowIncrement: uint(e.window_increment, 0x7fffffff)
+                  ? e.window_increment
+                  : null,
+                priorities:
+                  list(e.priorities, 32, (p) => priority(p) !== null)?.map(
+                    priority,
+                  ) ?? null,
+                headersPriority: priority(e.headers_priority),
+                pseudoHeaders: list(
+                  e.pseudo_headers,
+                  16,
+                  (p) => typeof p === 'string' && /^:[a-z_]{1,32}$/.test(p),
+                ),
               };
             continue;
           }
@@ -146,8 +205,9 @@ function createLiveAdapter({
       observedAt: new Date(now).toISOString(),
       captureStartedAt: new Date(captureStartedAt).toISOString(),
       transport: directConfig ? 'direct-browser' : 'proxy',
-      backendMode: 'native-test-db',
-      database: 'dacn2_test',
+      backendMode: database === 'dacn2' ? 'native-demo-db' : 'native-test-db',
+      database,
+      persistent: database === 'dacn2',
       gatewayHealth,
       backendHealth,
       healthAt,

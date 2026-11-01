@@ -1,4 +1,4 @@
-// Direct Chrome -> HTTPS Gateway -> NestJS -> dacn2_test; Vite carries UI/telemetry only.
+// Persistent demo defaults to dacn2. Explicit --test-db retains disposable QA fixtures.
 const fs = require('node:fs'),
   path = require('node:path'),
   net = require('node:net'),
@@ -7,9 +7,12 @@ const { X509Certificate, createHash, randomBytes } = require('node:crypto');
 const { spawn } = require('node:child_process');
 const { pathToFileURL } = require('node:url');
 const { setTimeout: delay } = require('node:timers/promises');
-const { runCommand } = require('./lab-command.cjs');
+const { runCommand } = require('./lib/lab-command.cjs');
+const { prepareCourses, cleanupCourses } = require('./lib/dashboard-data.cjs');
 const { createLiveAdapter } = require('../dashboard/server/live-adapter.cjs');
 const root = path.resolve(__dirname, '..');
+const testMode = process.argv.includes('--test-db');
+const database = testMode ? 'dacn2_test' : 'dacn2';
 const env = require('../backend/node_modules/dotenv').parse(
   fs.readFileSync(path.join(root, 'backend/.env')),
 );
@@ -31,9 +34,10 @@ let db,
 let initializing = true,
   stopRequested = false;
 const report = {
-  task: 'UI-03b',
+  task: 'UI-03c',
   sessionId: stamp,
-  database: 'dacn2_test',
+  database,
+  persistent: !testMode,
   mode: 'native-direct-browser',
   fixtureIds,
   cleanup: false,
@@ -52,7 +56,7 @@ if (process.argv[2] === 'stop') {
     ),
     'stop',
   );
-  console.log('Đã yêu cầu phiên riêng dừng và dọn fixture.');
+  console.log('Đã yêu cầu dừng phiên; đăng ký trong dacn2 được giữ nguyên.');
   process.exit(0);
 }
 function requestStop(code = 0) {
@@ -144,26 +148,17 @@ async function shutdown(code = 0) {
     if (server) await server.close();
     for (const c of [...children].reverse()) await stopChild(c);
     try {
-      if (db && fixtureIds.length) {
-        await db.query('BEGIN');
-        await db.query(
-          'DELETE FROM registrations WHERE course_id = ANY($1::bigint[])',
-          [fixtureIds],
-        );
-        await db.query(
-          'DELETE FROM courses WHERE id = ANY($1::bigint[]) AND code LIKE $2',
-          [fixtureIds, `UI${stamp}%`],
-        );
-        await db.query('COMMIT');
-      }
+      if (db) await cleanupCourses(db, testMode, fixtureIds, stamp);
       if (report.beforeDemo) {
         report.afterDemo = await snapshot('dacn2');
         report.afterTest = await snapshot('dacn2_test');
         report.cleanup =
-          JSON.stringify(report.beforeDemo) ===
-            JSON.stringify(report.afterDemo) &&
+          (!testMode ||
+            JSON.stringify(report.beforeDemo) ===
+              JSON.stringify(report.afterDemo)) &&
           JSON.stringify(report.beforeTest) ===
             JSON.stringify(report.afterTest);
+        report.dataPreserved = !testMode;
       }
     } catch {
       report.cleanup = false;
@@ -207,19 +202,18 @@ process.on('SIGTERM', () => requestStop());
       port: 5432,
       user: env.DB_USER,
       password: env.DB_PASSWORD,
-      database: 'dacn2_test',
+      database,
       connectionTimeoutMillis: 3000,
     });
     await db.connect();
-    const names = ['Nhập môn lập trình', 'Mạng máy tính', 'Hệ cơ sở dữ liệu'];
-    for (let i = 0; i < names.length; i++) {
-      const row = (
-        await db.query(
-          'INSERT INTO courses(code,name,capacity) VALUES ($1,$2,$3) RETURNING id::text',
-          [`UI${stamp}${i}`, names[i], i === 2 ? 1 : 20],
-        )
-      ).rows[0];
-      fixtureIds.push(row.id);
+    await db.query('BEGIN');
+    try {
+      fixtureIds.push(...(await prepareCourses(db, testMode, stamp)));
+      await db.query('COMMIT');
+    } catch (error) {
+      await db.query('ROLLBACK');
+      fixtureIds.length = 0;
+      throw error;
     }
     ensureRunning();
     fs.writeFileSync(
@@ -328,11 +322,12 @@ process.on('SIGTERM', () => requestStop());
       fixtureIds,
       requestGateway,
       directConfig: { token: browserToken },
+      database,
     });
     const backendEnv = {
       ...process.env,
       ...env,
-      DB_NAME: 'dacn2_test',
+      DB_NAME: database,
       HOST: '127.0.0.1',
       PORT: '13001',
     };
@@ -393,7 +388,7 @@ process.on('SIGTERM', () => requestStop());
     log('DEMO TRỰC TIẾP: http://127.0.0.1:5173/demo');
     log('Dashboard: http://127.0.0.1:5173/dashboard');
     log(
-      'Chrome → HTTPS Gateway18444 → NestJS13001 → dacn2_test. Dashboard chỉ nhận log. Ctrl+C dừng và dọn fixture.',
+      `Chrome → HTTPS Gateway18444 → NestJS13001 → ${database}. ${testMode ? 'QA: dừng sẽ dọn fixture.' : 'Đăng ký được lưu lâu dài; dừng không xoá dữ liệu.'}`,
     );
     if (!process.argv.includes('--no-browser')) {
       const chrome = path.join(

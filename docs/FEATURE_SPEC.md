@@ -1,5 +1,17 @@
 # Gateway feature specification
 
+## UI-03c explanatory inventory — 2026-11-01
+
+Dashboard's fingerprint explorer now lists the 12 planned features from the master
+plan: r_no_grease, rho_ja4, m_cross, s_mux, h_ip, h_uri, h_query, r_static, r_ip,
+iat, l_markov, t_up. This is an educational inventory, not final M2 formulas or
+implemented aggregate outputs. Units labeled provisional stay provisional.
+All 12 values are unavailable until their actual calculations are implemented
+and tested. Raw JA4/H2 metadata and per-request latency are separate observations;
+Gateway total latency must not silently substitute for t_up. No CSV export,
+training-data retention or labeling pipeline is introduced in steps1–2.
+
+
 ## M1-06 — controlled one-Pod capacity measurement
 
 Pre-measurement contract (2026-10-30): selected by user after M1-05h. Only local

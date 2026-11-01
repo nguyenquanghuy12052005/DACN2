@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { runCommand } = require('./lab-command.cjs');
+const { runCommand } = require('../lib/lab-command.cjs');
 
 const evidence = 'D:\\DACN2\\.local-backups\\m105g\\fake-low-ram';
 const options = { label: 'Backend lab start', labReport: true, timeout: 5000 };

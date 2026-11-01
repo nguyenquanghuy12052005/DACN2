@@ -1,6 +1,30 @@
 # Current milestone
 
-Updated: 2026-10-31 (Asia/Bangkok).
+CLEAN-02 COMPLETE (2026-11-01): maintenance/folder cleanup. Entrypoints unchanged;
+shared scripts→scripts/lib, tests→scripts/tests. Removed unreachable mock branches.
+1765files/726.15MiB disposable artifacts removed;558 retained evidence hashes PASS.
+Manifest .local-backups/cleanup-20261101/result.json. README explains folders/files.
+Checks: build/typecheck/lint/6RTL/14Node/4staticChrome/1liveChrome PASS; QA
+1793533492197 cleanup:true. No DBmainwrites/cluster/load/commit/push; M2 deferred.
+
+
+UI-03c COMPLETE (2026-11-01) — user-authorized steps1–2 only. Default dashboard
+runner uses persistent dacn2 canonical courses; no business cleanup at shutdown.
+QA explicitly --test-db, live write tests refuse mainDB. Fingerprint explorer
+shows validated4JA4/rawH2/request joins plus searchable12feature explanations,
+provisional units/sources/missing reasons. All12 aggregate values unavailable;
+no collector/formula finalization/dataset/CSV. M2 remains NOT_STARTED.
+Evidence: frontend build/typecheck/lint+6RTL PASS;5adapter+3lifecycle tests PASS;
+4static Chrome PASS; clean directChromeH2 testDB write/metadata/feature/axe/
+responsive PASS, session1793531833818 cleanup:true. Main read-only2start/stop
+stablecourses/seats/hashPASS: .local-backups/ui03c/main-readonly-1793531917813/.
+Real API201→persistentcleanup→restart count1/duplicate409 PASS using ONLY testDB:
+.local-backups/ui03c/retention-testdb-1793531993898/; cleanup:true/hashunchanged.
+No automated mainDB writes. All verification sessions stopped; user self-runs
+node scripts/dashboard-live.cjs. No reset command, no commit/push. UI-02/K3sUI,
+hostedCI and academicacceptance pending. Earlier UI-03b checkpoints below historical.
+
+Updated: 2026-11-01 (Asia/Bangkok).
 Stop checkpoint (user request, 2026-10-31): UI-03b manual user demo PASS: registration201/request21110074ce07868d4cf1f0e0ef2330f7-18, connection3/HTTP2.0 correlated with JA4 and H2/Akamai in journal/fingerprint UI. Real writes use per-session fixtures in dacn2_test; graceful cleanup removes owned fixtures/registrations, so DEMO001 can register against new course IDs next run. Persistent demo registration storage and training-data collection are not implemented. No session.lock found at checkpoint; host listeners not inspected. Docs-only update, no new tests/runtime/code changes or stage/commit/push. Stop here; next implementation task requires user scope choice. UI-02/K3s UI integration/M2 remain pending.
 Current objective: UI-03b direct Chrome→HTTPS Gateway COMPLETE. Actual HTTP/2 registration and correlated JA4/H2/request proven; native test DB session only. All QA sessions stopped/cleaned for user to self-run. UI-02 animations and K3s UI integration remain pending; M2 not started.
 M1-RAM01: user-authorized active lab startup reserve lowered 5→3 GiB in backend-lab (integration/benchmark inherit it). Runtime emergency stop <1 GiB and quotas unchanged; lower-RAM runtime not yet verified. Historical measurements remain unchanged.
