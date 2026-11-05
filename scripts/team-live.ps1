@@ -1,4 +1,7 @@
-param([ValidateSet('start', 'stop')][string]$Action = 'start')
+param(
+    [ValidateSet('start', 'stop')][string]$Action = 'start',
+    [switch]$CheckOnly
+)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $projectRoot
@@ -8,20 +11,56 @@ if ($Action -eq 'stop') {
     exit $LASTEXITCODE
 }
 
-# Prepare host dependencies before creating any local Docker resources.
+# Collect all missing prerequisites before installing or starting anything.
+$issues = New-Object 'System.Collections.Generic.List[string]'
+$available = @{}
 foreach ($command in @('node', 'npm.cmd', 'go', 'docker')) {
-    if (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
-        throw "Missing $command. Install Node.js >=22.19, Go >=1.27.3 and Docker Desktop (Linux containers)."
+    $available[$command] = [bool](Get-Command $command -ErrorAction SilentlyContinue)
+    if (-not $available[$command]) {
+        $issues.Add("Missing command: $command. Install it and reopen PowerShell to refresh PATH.")
     }
 }
-& node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>22||(a===22&&b>=19)?0:1)'
-if ($LASTEXITCODE -ne 0) { throw 'Node.js >=22.19 required.' }
-$chrome = Join-Path $env:ProgramFiles 'Google/Chrome/Application/chrome.exe'
-if (-not (Test-Path -LiteralPath $chrome)) { throw 'Install Google Chrome for all users (Program Files) before starting the Live lab.' }
-& docker info --format '{{.OSType}}' | ForEach-Object {
-    if ($_ -ne 'linux') { throw 'Docker Desktop must use Linux containers.' }
+if ($available['node']) {
+    try {
+        $nodeVersion = (& node --version 2>$null | Out-String).Trim()
+        if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v(\d+\.\d+\.\d+)$') {
+            $issues.Add('Cannot determine Node.js version.')
+        } elseif ([version]$Matches[1] -lt [version]'22.19.0') {
+            $issues.Add("Node.js >=22.19.0 required; found $nodeVersion.")
+        }
+    } catch { $issues.Add('Cannot run Node.js; check its installation/PATH.') }
 }
-if ($LASTEXITCODE -ne 0) { throw 'Start Docker Desktop before continuing.' }
+if ($available['go']) {
+    try {
+        $goVersion = (& go version 2>$null | Out-String).Trim()
+        if ($LASTEXITCODE -ne 0 -or $goVersion -notmatch 'go(\d+\.\d+\.\d+)(?:\s|$)') {
+            $issues.Add('Cannot determine a stable Go version (need >=1.27.3).')
+        } elseif ([version]$Matches[1] -lt [version]'1.27.3') {
+            $issues.Add("Go >=1.27.3 required; found $goVersion.")
+        }
+    } catch { $issues.Add('Cannot run Go; check its installation/PATH.') }
+}
+$chrome = Join-Path $env:ProgramFiles 'Google/Chrome/Application/chrome.exe'
+if (-not (Test-Path -LiteralPath $chrome)) {
+    $issues.Add('Install Google Chrome for all users in C:\Program Files\Google\Chrome\Application (not only AppData).')
+}
+if ($available['docker']) {
+    try {
+        $dockerType = (& docker info --format '{{.OSType}}' 2>$null | Out-String).Trim()
+        if ($LASTEXITCODE -ne 0) { $issues.Add('Start Docker Desktop and wait until its engine is ready.') }
+        elseif ($dockerType -ne 'linux') { $issues.Add('Switch Docker Desktop to Linux containers.') }
+        & docker compose version *> $null
+        if ($LASTEXITCODE -ne 0) { $issues.Add('Docker Compose v2 is missing; repair/update Docker Desktop.') }
+    } catch { $issues.Add('Cannot query Docker Desktop/Compose; start or repair Docker Desktop.') }
+}
+if ($issues.Count -gt 0) {
+    Write-Output 'Complete prerequisite check failed. Fix ALL items below, then reopen PowerShell:'
+    foreach ($issue in $issues) { Write-Output " - $issue" }
+    Write-Output 'Full Windows setup checklist: README.md -> Clone va chay Live.'
+    exit 1
+}
+Write-Output 'Prerequisites OK: Node/npm, Go, Chrome, Docker Linux engine and Compose.'
+if ($CheckOnly) { exit 0 }
 
 # Refuse occupied UI ports; do not stop unrelated processes/containers.
 & node -e 'const net=require("node:net");(async()=>{for(const port of [5173,13001,18444])await new Promise((ok,no)=>{const s=net.createServer();s.once("error",no);s.listen(port,"127.0.0.1",()=>s.close(ok));});})().catch(()=>{console.error("Live ports busy. Stop the Docker dashboard with scripts/team.ps1 stop, or stop the existing native lab first.");process.exitCode=1;});'

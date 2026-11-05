@@ -1,5 +1,19 @@
 # DACN2 — checkpoint tiếp tục dự án
 
+## TEAM-LIVE complete prerequisites (2026-11-05)
+
+Recipient's missing Go error showed setup guidance needed one complete checklist.
+README now lists Windows/PowerShell, Git for clone, Node/npm>=22.19, Go>=1.27.3,
+Chrome in Program Files, Docker Desktop+Compose v2/WSL2/Linux engine, refreshed
+PATH, network access and reserved ports. No host PostgreSQL/extra CLIs required.
+team-live now collects missing commands/version/Chrome/Docker errors together
+before any installation/startup. `-CheckOnly` exits after read-only preflight.
+Verification: scripts/tests/team-preflight.test.ps1 (isolated mocked PowerShell
+scenarios: all tools missing; old Node/Go+Windows engine; success without any
+install/start) PASS; PowerShell AST parse and git diff --check PASS. No actual
+tool install, Docker runtime/startup or DB actions. Fresh-machine full Live flow
+still unverified. No commit/push in this follow-up.
+
 ## TEAM-LIVE portable native runner prepared (2026-11-05)
 
 User shared Git URL and wants recipients to run the same Live journey as

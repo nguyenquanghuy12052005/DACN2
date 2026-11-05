@@ -2,9 +2,39 @@
 
 ## Clone và chạy Live giống máy tác giả (Windows)
 
-Cài Git, Node.js >=22.19, Go >=1.27.3, Google Chrome (cài cho mọi người dùng
-trong Program Files), và Docker Desktop. Mở Docker Desktop ở Linux containers.
-Sau đó mở PowerShell:
+Chuẩn bị **đầy đủ một lần** trên máy nhận source:
+
+1. **Windows 10/11 và PowerShell**. Hướng dẫn này dành cho Windows.
+2. **Git for Windows** để clone/pull: https://git-scm.com/downloads/win.
+   Nếu nhận ZIP thì không cần Git để chạy, nhưng không dùng được `git pull`.
+3. **Node.js >=22.19.0 kèm npm**, thêm vào PATH khi cài: https://nodejs.org/en/download.
+4. **Go >=1.27.3**, bộ cài Windows MSI, thêm vào PATH: https://go.dev/dl/.
+   Cần Go trên Windows vì Gateway Live được build/chạy trực tiếp trên host.
+5. **Google Chrome**, cài cho mọi người dùng ở
+   `C:\Program Files\Google\Chrome\Application\chrome.exe`:
+   https://www.google.com/chrome/. Bản chỉ cài trong AppData chưa được runner tìm.
+6. **Docker Desktop kèm Compose v2**: https://docs.docker.com/desktop/setup/install/windows-install/.
+   Hoàn tất yêu cầu WSL2/virtualization theo bộ cài, khởi động lại nếu được yêu cầu.
+   Mở Docker Desktop, chờ engine sẵn sàng và chọn **Linux containers**.
+7. **Đóng rồi mở lại PowerShell** sau khi cài để nhận PATH. Cần mạng để tải image,
+   npm dependencies và Go modules/toolchain; không dùng offline cho lần đầu.
+
+Không cần cài PostgreSQL Windows, NestJS CLI, Vite, OpenSSL, Python, K3s hay
+AI để chạy bản Live này. Script tự cài dependencies dự án và chuẩn bị DB/env/cert;
+không xin `.env`, mật khẩu hay chứng chỉ từ máy tác giả.
+
+Kiểm tra cài đặt một lượt (sau khi clone):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\team-live.ps1 -CheckOnly
+```
+
+Lệnh này chỉ kiểm tra, không cài dependencies, tạo env hoặc khởi động container.
+Nó liệt kê cùng lúc các công cụ thiếu, sai phiên bản, Chrome sai vị trí hoặc
+Docker chưa sẵn sàng. Trước khi chạy Live, giữ các cổng5173/13001/18444 trống;
+cổng15433 dành cho PostgreSQL Compose (không chạy DB khác chiếm cổng này).
+
+Sau khi chuẩn bị đủ, mở PowerShell:
 
 ```powershell
 git clone https://github.com/nguyenquanghuy12052005/DACN2.git

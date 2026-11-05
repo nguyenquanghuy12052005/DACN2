@@ -1,5 +1,13 @@
 # Current milestone
 
+TEAM-LIVE prerequisite follow-up (2026-11-05): user requests complete setup
+notes after recipient hit missing Go. README now enumerates all Windows tools,
+versions/PATH, Chrome install location, Docker/WSL2/Linux/Compose, network/ports.
+team-live aggregates prerequisite errors before installation/startup and adds
+-CheckOnly. PowerShell mocked missing-tools/wrong-version/success checks and
+AST syntax/diff checks PASS. No actual installs/containers/DB actions; recipient
+end-to-end rehearsal still pending. Local changes not committed/pushed here.
+
 TEAM-LIVE portability prepared (2026-11-05). Phase: M1 handoff maintenance;
 task: fix new-checkout Live startup failures (dependencies/env/DB/certificate).
 Acceptance: explicit team DB15433 mode without backend/.env; native DB5432

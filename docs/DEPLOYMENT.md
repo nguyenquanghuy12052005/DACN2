@@ -4,6 +4,9 @@
 
 Prerequisites: Git, Node>=22.19, Go>=1.27.3, Chrome installed under Program Files,
 Docker Desktop running Linux containers, network access for first install/build.
+Complete installation/PATH/WSL2/port checklist is at the top of README.md.
+Run `team-live.ps1 -CheckOnly` first for an aggregate prerequisite report without
+installing dependencies, creating configuration or starting containers.
 From root run `powershell -ExecutionPolicy Bypass -File .\scripts\team-live.ps1`.
 If Compose preview already owns5173, stop it with `team.ps1 stop` first.
 
