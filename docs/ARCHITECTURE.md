@@ -728,3 +728,14 @@ Trạng thái: hoàn thành khảo sát và ghi giới hạn; chưa cài cluster
 - Nếu máy không đủ tài nguyên sau đo, ghi blocker và trình phương án lab Linux khác cho người dùng; không tự giảm số feature hoặc điều kiện nghiệm thu.
 
 Nguồn kỹ thuật đã đối chiếu ngày 29/10/2026: [K3s requirements](https://docs.k3s.io/installation/requirements), [k3d overview](https://k3d.io/stable/), [Kubernetes version skew](https://kubernetes.io/releases/version-skew-policy/). Các nhận định về RAM của máy dựa số đo local; tài liệu upstream không chứng minh năng lực của máy này.
+
+## Team Live portability decision (2026-11-05)
+
+The explicit `--team-db` mode reuses the existing Compose PostgreSQL volume on
+loopback15433 and the checkout's `.env.team` and team certificate. Native Vite,
+NestJS and Go still run on Windows, preserving direct Chrome→HTTPS Gateway/H2
+fingerprint observation and the existing Live adapter. The default native
+WindowsPG5432 mode stays unchanged. No new service, UI-container Live transport,
+model, collector or scaling controller is introduced. `scripts/team-live.ps1`
+prepares dependencies/env/cert and starts only PostgreSQL. Full fresh-machine
+execution is pending; see DEPLOYMENT and PROGRESS for verification limits.

@@ -7,6 +7,13 @@ Gateway browser boundary and correlated TLS/H2 logs; backend and AI are unchange
 
 ## Demo trực tiếp — lưu lâu dài trong dacn2
 
+Máy Windows mới: từ root chạy
+`powershell -ExecutionPolicy Bypass -File .\scripts\team-live.ps1`.
+Yêu cầu Node.js>=22.19, Go>=1.27.3, Chrome trong Program Files và Docker Desktop
+Linux containers. Script tạo env/cert riêng, cài dependencies và bật PostgreSQL
+Docker15433; Live native dùng `--team-db`, không cần `backend/.env` hay PG Windows.
+Xem README root cho cách dừng và giới hạn kiểm chứng trên máy mới.
+
 Từ thư mục gốc chạy `node scripts/dashboard-live.cjs`. Script tự mở Chrome lab
 riêng với certificate SPKI cho phép; dùng cửa sổ này cho HTTPS/HTTP2.
 Luồng: Chrome→Gateway18444→NestJS13001→PostgreSQL `dacn2`; Vite5173 chỉ UI/log.

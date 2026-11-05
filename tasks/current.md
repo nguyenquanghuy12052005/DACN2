@@ -1,5 +1,17 @@
 # Current milestone
 
+TEAM-LIVE portability prepared (2026-11-05). Phase: M1 handoff maintenance;
+task: fix new-checkout Live startup failures (dependencies/env/DB/certificate).
+Acceptance: explicit team DB15433 mode without backend/.env; native DB5432
+unchanged; local env/cert generation; direct browser H2 preserved; no data reset.
+Added scripts/team-live.ps1 and --team-db config with 5 regression tests.
+13 config/data/adapter tests PASS; Node/PowerShell syntax and diff whitespace PASS.
+No service startup/DB writes/clean-clone rehearsal. Real team-mode browser
+registration, restart persistence and cleanup verification remain pending;
+no complete handoff release claim. Changes local only, not committed/pushed.
+Next: publish reviewed source when requested, then recipient runs wrapper and
+records actual Live201/409/fingerprint/persistence/stop evidence. M2 unchanged.
+
 TEAM-HANDOFF source package prepared (2026-11-01), user asked to stop excessive
 verification. Added Windows scripts/team.ps1 setup/start/stop/status/logs, local
 certificate generator and .env.team.example. New checkouts generate their own

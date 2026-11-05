@@ -1,5 +1,32 @@
 # DACN2 — checkpoint tiếp tục dự án
 
+## TEAM-LIVE portable native runner prepared (2026-11-05)
+
+User shared Git URL and wants recipients to run the same Live journey as
+`node scripts/dashboard-live.cjs` on the author's machine. Recipient previously
+failed on missing backend dependencies, then backend/.env; Docker UI was mock.
+Added `scripts/team-live.ps1`: checks Windows prerequisites/free lab ports,
+installs locked host dependencies, invokes existing team env/cert setup, starts
+only Compose PostgreSQL and waits for TCP readiness (30 attempts/2seconds).
+Then `--team-db` runs the existing native Live stack against loopback15433 with
+TEAM_APP_PASSWORD and matching team TLS pair; no backend/.env copying/rewriting.
+Default native5432 and gateway pair remain selected without the new flag.
+Wrapper stop requests owned Live shutdown; DB/data remain until team.ps1 stop.
+
+Validation: `node --test scripts/tests/dashboard-config.test.cjs
+scripts/tests/dashboard-data.test.cjs dashboard/server/live-adapter.test.cjs`
+13PASS; `node --check scripts/dashboard-live.cjs`, PowerShell AST parse of
+team-live.ps1, and `git diff --check` PASS. Tests cover missing env/cert,
+mode isolation, forbidden remote/native-port switch, placeholders, legacy TLS.
+No Docker/service/DB runtime actions, application build, fresh-clone rehearsal,
+actual registration/persistence/H2 observation on this new mode. Thus prepared,
+not end-to-end verified. Full app lint/typecheck/build not rerun: only launcher,
+config and docs changed; relevant scripts have syntax/tests, not a root lint job.
+Pinned incremental skill retrieval failed (web cache miss and shell DNS failure);
+used repository guidance without claiming skill application. GitHub page retrieval
+also failed; changes reflect local source only. No commit/push. README/dashboard
+guide/DEPLOYMENT/ARCHITECTURE updated; M2 and academic acceptance remain open.
+
 TEAM-HANDOFF source package prepared (2026-11-01), user asked to stop excessive
 verification. Added Windows scripts/team.ps1 setup/start/stop/status/logs, local
 certificate generator and .env.team.example. New checkouts generate their own

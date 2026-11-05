@@ -1,5 +1,35 @@
 # DACN2 — L7 cyber-defense lab
 
+## Clone và chạy Live giống máy tác giả (Windows)
+
+Cài Git, Node.js >=22.19, Go >=1.27.3, Google Chrome (cài cho mọi người dùng
+trong Program Files), và Docker Desktop. Mở Docker Desktop ở Linux containers.
+Sau đó mở PowerShell:
+
+```powershell
+git clone https://github.com/nguyenquanghuy12052005/DACN2.git
+cd DACN2
+powershell -ExecutionPolicy Bypass -File .\scripts\team-live.ps1
+```
+
+Script cài thư viện từ lockfile, tạo `.env.team` và certificate riêng nếu chưa
+có, khởi động **chỉ PostgreSQL Docker**, rồi chạy cùng bản Live native như máy
+tác giả: Chrome → HTTPS Gateway18444 → NestJS13001 → PostgreSQL15433.
+Không cần PostgreSQL Windows hoặc `backend/.env`; không sao chép secret của tác giả.
+Dùng cửa sổ Chrome lab tự mở để đăng ký tại `/demo` và xem nhật ký/fingerprint
+thật tại `/dashboard`. Không có AI, dataset collector hay autoscaling trong bản này.
+
+Nếu đã bật Docker preview bằng `team.ps1 start`, chạy `team.ps1 stop` trước để
+giải phóng cổng5173. Ctrl+C dừng Live; PostgreSQL Docker vẫn chạy và giữ đăng ký.
+Muốn dừng DB, chạy `powershell -ExecutionPolicy Bypass -File .\scripts\team.ps1 stop`.
+Không xoá volume. Dữ liệu Docker của mỗi máy là riêng; không có đăng ký của tác giả.
+
+Những lần sau có thể dùng `node scripts/dashboard-live.cjs --team-db` khi database
+Docker còn chạy và dependencies đã cài. Sau `git pull`, dùng lại `team-live.ps1` để
+đồng bộ thư viện. Máy tác giả vẫn dùng `node scripts/dashboard-live.cjs` với DB5432.
+Lỗi mật khẩu với volume cũ cần đối chiếu `.env.team` gốc, không tạo mật khẩu mới hay
+xoá DB để thử lại. Quy trình máy mới này chưa được diễn tập end-to-end; xem PROGRESS.
+
 ## Nhận dự án và chạy bằng Docker (Windows)
 
 Yêu cầu: Git, Docker Desktop đang chạy Linux containers, PowerShell và mạng

@@ -1,5 +1,34 @@
 # Deployment and recovery
 
+## Team Live on a new Windows checkout (2026-11-05)
+
+Prerequisites: Git, Node>=22.19, Go>=1.27.3, Chrome installed under Program Files,
+Docker Desktop running Linux containers, network access for first install/build.
+From root run `powershell -ExecutionPolicy Bypass -File .\scripts\team-live.ps1`.
+If Compose preview already owns5173, stop it with `team.ps1 stop` first.
+
+The wrapper installs backend/dashboard lockfiles, calls `team.ps1 setup` to
+generate local secrets/certificate without overwriting existing ones, and starts
+only the existing Compose PostgreSQL service. A bounded TCP readiness check
+waits up to60seconds before the native Live runner uses `--team-db`.
+This flag selects only loopback15433/dacn2_app/.env.team; native default remains
+loopback5432/backend/.env. Each mode uses its matching certificate directory.
+The Gateway remains a native process with direct browser HTTPS/H2, not a UI proxy.
+Neither mode rewrites backend/.env. Each checkout/machine owns its DB and secrets.
+
+Ctrl+C stops the owned Live processes but leaves PostgreSQL/data available.
+`team-live.ps1 stop` requests Live shutdown in another terminal; then `team.ps1 stop`
+can stop PostgreSQL without deleting the volume. For restart use the wrapper, or
+`node scripts/dashboard-live.cjs --team-db` if dependencies/certificate/database
+are already ready. A changed DB password in env does not update an existing DB
+role; restore the matching local env or administer that role deliberately.
+Do not delete volumes or copy another machine's credentials to resolve this.
+
+Verification: configuration/data/adapter tests and Node/PowerShell parse checks
+pass. No Docker start, fresh-clone installation, actual team-mode registration,
+restart persistence or browser capture was run for this change. It is prepared
+handoff code, not a validated new-machine lab release. AI/K3s scaling remain absent.
+
 ## Team dashboard preview — user build pending (2026-11-01)
 
 `docker compose --env-file .env.team -f compose.team.yaml up -d --build --wait dashboard`

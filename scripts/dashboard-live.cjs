@@ -10,15 +10,20 @@ const { setTimeout: delay } = require('node:timers/promises');
 const { runCommand } = require('./lib/lab-command.cjs');
 const { prepareCourses, cleanupCourses } = require('./lib/dashboard-data.cjs');
 const { createLiveAdapter } = require('../dashboard/server/live-adapter.cjs');
+const { loadLiveConfig } = require('./lib/dashboard-config.cjs');
 const root = path.resolve(__dirname, '..');
 const testMode = process.argv.includes('--test-db');
 const database = testMode ? 'dacn2_test' : 'dacn2';
-const env = require('../backend/node_modules/dotenv').parse(
-  fs.readFileSync(path.join(root, 'backend/.env')),
-);
-require('node:assert/strict').equal(env.DB_USER, 'dacn2_app');
-require('node:assert/strict').equal(env.DB_HOST, '127.0.0.1');
-require('node:assert/strict').equal(env.DB_PORT, '5432');
+const teamMode = process.argv.includes('--team-db');
+let env, tlsDir;
+try {
+  ({ env, tlsDir } = loadLiveConfig(root, teamMode, require('../backend/node_modules/dotenv').parse));
+} catch (error) {
+  console.error(error.code === 'MODULE_NOT_FOUND'
+    ? 'Missing backend dependencies. Run npm --prefix backend ci, or scripts/team-live.ps1 on a new Windows machine.'
+    : error.message);
+  process.exit(1);
+}
 const { Client } = require('../backend/node_modules/pg');
 const stamp = Date.now().toString(),
   out = path.join(root, '.local-backups/ui-live', stamp);
@@ -39,6 +44,7 @@ const report = {
   database,
   persistent: !testMode,
   mode: 'native-direct-browser',
+  databaseMode: teamMode ? 'compose-team' : 'native',
   fixtureIds,
   cleanup: false,
 };
@@ -122,7 +128,7 @@ function child(command, args, options, file) {
 async function snapshot(database) {
   const c = new Client({
     host: '127.0.0.1',
-    port: 5432,
+    port: Number(env.DB_PORT),
     user: env.DB_USER,
     password: env.DB_PASSWORD,
     database,
@@ -199,7 +205,7 @@ process.on('SIGTERM', () => requestStop());
     report.beforeTest = await snapshot('dacn2_test');
     db = new Client({
       host: '127.0.0.1',
-      port: 5432,
+      port: Number(env.DB_PORT),
       user: env.DB_USER,
       password: env.DB_PASSWORD,
       database,
@@ -240,7 +246,7 @@ process.on('SIGTERM', () => requestStop());
       timeout: 90000,
     });
     ensureRunning();
-    const ca = fs.readFileSync(path.join(root, 'gateway/cert.pem')),
+    const ca = fs.readFileSync(path.join(tlsDir, 'cert.pem')),
       fingerprint = new X509Certificate(ca).fingerprint256;
     const certificate = new X509Certificate(ca);
     if (
@@ -350,7 +356,7 @@ process.on('SIGTERM', () => requestStop());
     child(
       binary,
       [],
-      { cwd: path.join(root, 'gateway'), env: gatewayEnv },
+      { cwd: tlsDir, env: gatewayEnv },
       'gateway.log',
     );
     let ready = false;
