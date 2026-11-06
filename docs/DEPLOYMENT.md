@@ -602,3 +602,23 @@ does not assert graceful control-plane shutdown. All own hostports released;
 defaultkubeconfig unchanged, final freeRAM7.36GiB. If an interactive verification
 is interrupted outside the benchmark's Ctrl+C handler, run the explicit stop
 command and inspect only owned resources before resuming.
+# M2 CSV verification and recovery — 2026-11-06
+
+Live sessions create dataset/windows.csv, events.jsonl and manifest.json beneath
+.local-backups/ui-live/SESSION/. Keep the whole directory for replay. Regular
+Live runs leave labels unset. DACN2_WINDOW_LABEL may declare one of Normal,
+Flash_Crowd, Pure_L7_DDoS, Mixed_Traffic for a controlled scenario. The declaration
+is recorded as operator_declared and requires independent scenario ground truth.
+DACN2_MARKOV_REFERENCE optionally points to a versioned local reference. A fixture
+reference is for verification only and must be excluded from training.
+
+After stopping Live, use the saved manifest ended_at as END_UTC:
+
+`node scripts/replay-features.cjs DATASET_DIR END_UTC`
+
+Compare csv_sha256 before/after; identical source/reference/end should match.
+After a crash, choose an explicit end time covering retained observations, replay
+and inspect malformed_lines and the retained recording state before accepting the
+result. Retain source logs for audit. Test recovery in an isolated worker with
+`node scripts/tests/collector-crash.cjs`; this does not access the database.
+Do not kill the Live runner to exercise that file-only test.

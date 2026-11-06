@@ -11,10 +11,16 @@ const { runCommand } = require('./lib/lab-command.cjs');
 const { prepareCourses, cleanupCourses } = require('./lib/dashboard-data.cjs');
 const { createLiveAdapter } = require('../dashboard/server/live-adapter.cjs');
 const { loadLiveConfig } = require('./lib/dashboard-config.cjs');
+const { createCollector } = require('./lib/feature-window.cjs');
 const root = path.resolve(__dirname, '..');
 const testMode = process.argv.includes('--test-db');
 const database = testMode ? 'dacn2_test' : 'dacn2';
 const teamMode = process.argv.includes('--team-db');
+const trafficLab = process.argv.includes('--traffic-lab');
+if (trafficLab && !testMode) {
+  console.error('--traffic-lab requires --test-db');
+  process.exit(1);
+}
 let env, tlsDir;
 try {
   ({ env, tlsDir } = loadLiveConfig(root, teamMode, require('../backend/node_modules/dotenv').parse));
@@ -29,6 +35,8 @@ const stamp = Date.now().toString(),
   out = path.join(root, '.local-backups/ui-live', stamp);
 const children = [];
 let db,
+  collector,
+  collectorTimer,
   server,
   adapter,
   fixtureIds = [],
@@ -45,6 +53,7 @@ const report = {
   persistent: !testMode,
   mode: 'native-direct-browser',
   databaseMode: teamMode ? 'compose-team' : 'native',
+  trafficLab,
   fixtureIds,
   cleanup: false,
 };
@@ -85,12 +94,9 @@ async function portFree(port) {
   });
 }
 async function stopChild(child) {
-  if (!child.pid || child.exitCode !== null || child.signalCode !== null)
-    return;
-  await new Promise((resolve) => {
-    child.once('exit', resolve);
-    child.kill();
-  });
+  if (!child.pid) return;
+  if (child.exitCode === null && child.signalCode === null) child.kill();
+  await child.closed;
 }
 function child(command, args, options, file) {
   const fd = fs.openSync(path.join(out, file), 'a');
@@ -100,6 +106,7 @@ function child(command, args, options, file) {
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   children.push(c);
+  c.closed = new Promise(resolve => c.once('close', resolve));
   c.on('error', () => {
     if (file === 'chrome.log') {
       log('Không mở được Chrome lab; kiểm tra đường dẫn Chrome.');
@@ -110,7 +117,13 @@ function child(command, args, options, file) {
   });
   c.stdout.on('data', (data) => {
     fs.writeSync(fd, data);
-    if (file === 'gateway.log') adapter.ingest(data);
+    if (file === 'gateway.log') {
+      adapter.ingest(data);
+      try { collector?.ingest(data); } catch (error) {
+        report.collectorError = error.message;
+        requestStop(1);
+      }
+    }
   });
   c.stderr.on('data', (data) => {
     fs.writeSync(fd, data);
@@ -150,9 +163,14 @@ async function shutdown(code = 0) {
   stopping = true;
   finalizing = (async () => {
     clearInterval(stopWatch);
+    clearInterval(collectorTimer);
     adapter?.close();
     if (server) await server.close();
     for (const c of [...children].reverse()) await stopChild(c);
+    if (collector) {
+      try { report.dataset = await collector.close(); }
+      catch (error) { report.collectorError = error.message; code = 1; }
+    }
     try {
       if (db) await cleanupCourses(db, testMode, fixtureIds, stamp);
       if (report.beforeDemo) {
@@ -193,6 +211,16 @@ process.on('SIGTERM', () => requestStop());
     for (const p of [5173, 13001, 18444]) await portFree(p);
     const lockFd = fs.openSync(lock, 'wx');
     lockOwned = true;
+    collector = createCollector(path.join(out,'dataset'),stamp, {
+      label: process.env.DACN2_WINDOW_LABEL,
+      markovFile: process.env.DACN2_MARKOV_REFERENCE,
+    });
+    collectorTimer = setInterval(() => {
+      collector.flush().catch(error => {
+        report.collectorError = error.message;
+        requestStop(1);
+      });
+    }, 5000);
     fs.writeSync(
       lockFd,
       JSON.stringify({ pid: process.pid, sessionId: stamp }),
@@ -246,6 +274,15 @@ process.on('SIGTERM', () => requestStop());
       timeout: 90000,
     });
     ensureRunning();
+    if (testMode) {
+      tlsDir = path.join(out, 'tls');
+      fs.mkdirSync(tlsDir);
+      await runCommand('go', ['run', './scripts/team-cert/main.go', '-out', tlsDir], {
+        cwd: root,
+        timeout: 90000,
+      });
+      ensureRunning();
+    }
     const ca = fs.readFileSync(path.join(tlsDir, 'cert.pem')),
       fingerprint = new X509Certificate(ca).fingerprint256;
     const certificate = new X509Certificate(ca);
@@ -350,6 +387,7 @@ process.on('SIGTERM', () => requestStop());
       DACN2_BROWSER_ORIGIN: 'http://127.0.0.1:5173',
       DACN2_BROWSER_TOKEN: browserToken,
       DACN2_BROWSER_COURSE_IDS: fixtureIds.join(','),
+      DACN2_TRAFFIC_LAB: trafficLab ? '1' : '',
     };
     delete gatewayEnv.DACN2_TLS_KEYLOG;
     delete gatewayEnv.SSLKEYLOGFILE;

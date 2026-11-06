@@ -1,5 +1,21 @@
 # Architecture and decisions
 
+## Bounded scenario generator decision — 2026-11-06
+
+Use the existing direct-browser Live lab as the single generator target. One
+headless installed Chrome with up to4isolated contexts supports both legitimate
+and attack-intent roles, avoiding a default one-tool-per-class shortcut.
+Client roles/seed/scenario/ground truth are generator-side metadata only.
+Fixed scheduler caps dispatch at20actions/s and300s; client think-time/busy state
+may reduce actual goodput. Existing Origin/token/fixture authorization remains.
+An explicitly test-only --traffic-lab mode permits300browseractions/10s to
+accommodate bounded collection; ordinary browser mode keeps30/10s.
+Run-specific datasets are selected by response request IDs from retained Gateway
+logs and include sharedsource split_group_id. Partial attribution yields unlabeled
+incomplete output. Fixed API patterns and loopback IPs are pilot limitations.
+Fresh Gateway sessions and richer independent scenarios remain necessary for
+collection/evaluation; low offered load does not establish denial of service.
+
 ## TEAM-GW01 — opt-in Compose network boundary (2026-11-01)
 
 Gateway config now accepts DACN2_NETWORK_MODE=compose-team to permit exactly

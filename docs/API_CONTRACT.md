@@ -310,3 +310,25 @@ Illustrative event, not execution evidence; numbers are example values:
   response scope tested; upgraded protocol tunnels and detached/hijacked-connection
   byte accounting are not validated. response_bytes counts body writes through the
   wrapped response writer, not raw writes after a connection is hijacked.
+# M2 additive telemetry fields — 2026-11-06
+
+Opt-in DACN2_TRAFFIC_LAB=1 raises only the existing browser-lab action ceiling
+from30to300per10seconds. Exact Origin/token/route/body checks and8inflight ceiling
+still apply. The Live runner accepts --traffic-lab only with --test-db and records
+trafficLab:true in result.json. Generator requires that flag plus matching active
+session IDs and database dacn2_test in both report and snapshot. Its own scheduler
+limits dispatch to20actions/s,4clients and300seconds. No arbitrary target URL input.
+
+Latest additive field ua_family is chromium/firefox/safari/unknown. Request event
+now has23fields. has_grease checks numeric cipher/extension/version/group/signature
+GREASE. Reference profile and optional Markov versions/kind are captured in the
+dataset manifest; see current FEATURE_SPEC for coverage and acceptance evidence.
+
+gateway_request schema_version1 adds upstream_headers_ms (nullable nonnegative
+RoundTrip-to-headers milliseconds), query_group (none/present) and is_static
+(suffix-based boolean). Existing field semantics remain. gateway_tls adds has_grease,
+currently scoped to ClientHello cipher suites and extensions. Consumers tolerate
+additive fields. CSV schema traffic-window.v1 has 12 ordered feature columns,
+session/window keys, optional label, duration status, missing_reasons, coverage,
+and a session-local events.jsonl reference. Missing numeric cells are empty.
+This is a pilot contract; compatibility and capture gaps are in FEATURE_SPEC.

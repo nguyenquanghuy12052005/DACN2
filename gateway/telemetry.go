@@ -27,6 +27,10 @@ const (
 )
 
 type gatewayRequestEvent struct {
+	UserAgentFamily   string    `json:"ua_family"`
+	UpstreamHeadersMS *float64  `json:"upstream_headers_ms"`
+	QueryGroup        string    `json:"query_group"`
+	IsStatic          bool      `json:"is_static"`
 	SchemaVersion     int       `json:"schema_version"`
 	Event             string    `json:"event"`
 	RequestID         string    `json:"request_id"`
@@ -109,11 +113,14 @@ func (t telemetryTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		s.event.UpstreamAttempted = true
 		s.mu.Unlock()
 	}
+	upstreamStart := time.Now()
 	response, err := t.base.RoundTrip(r)
 	if s != nil && err == nil && response != nil {
 		s.mu.Lock()
 		status := response.StatusCode
 		s.event.UpstreamStatus = &status
+		elapsed := time.Since(upstreamStart).Seconds() * 1000
+		s.event.UpstreamHeadersMS = &elapsed
 		s.mu.Unlock()
 	}
 	return response, err
@@ -224,6 +231,16 @@ func (g *gatewayTelemetry) observe(next http.Handler) http.Handler {
 			e.Outcome = "gateway_local"
 		}
 		s := &gatewayRequestState{event: e}
+		s.event.UserAgentFamily = userAgentFamily(r.UserAgent())
+		s.event.QueryGroup = "none"
+		if r.URL.RawQuery != "" {
+			s.event.QueryGroup = "present"
+		}
+		for _, suffix := range []string{".css", ".js", ".png", ".jpg", ".svg", ".ico", ".woff2"} {
+			if strings.HasSuffix(strings.ToLower(r.URL.Path), suffix) {
+				s.event.IsStatic = true
+			}
+		}
 		writer := &telemetryResponseWriter{ResponseWriter: w, requestID: id, head: r.Method == "HEAD"}
 		w.Header().Set("X-Request-ID", id)
 		defer func() {

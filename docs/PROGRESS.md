@@ -1,5 +1,94 @@
 # DACN2 — checkpoint tiếp tục dự án
 
+## CSV tổng theo yêu cầu người dùng — 2026-11-06
+
+Gộp4lượt người dùng thành .local-backups/traffic/training_total.csv:
+20dòng/23cột, ID đầu tiên, window_label thứ hai, sau đó12feature và metadata.
+Giữ16complete/4partial, giá trị thiếu, split_group_id và tham chiếu log từng nguồn.
+Đọc lại CSV đối soát toàn bộ giá trị, ID và phân bố5dòng/mỗi lớp PASS.
+
+## Four-scenario generators — 2026-11-06
+
+Added scripts/generate-traffic.cjs, lib/traffic-plan.cjs and3regressiontests.
+All roles use installed Chrome1.64.1Playwright driver, directHTTPS/H2; human
+thinktime500–1500ms, read/register workflow on ownedtestfixtures, bots repeatreads.
+No remote-target input. Runner --traffic-lab requires --test-db and raises only
+opt-in browser actionbound300/10s; default30/10s remains. Gatewayratebound test
+checks both modes including refusal atlimit+1.8inflight guard retained.
+Smoke10s each:
+Normal traffic-a8f2eef8-df77-4c21-84be-8a49e6384b09:9requests(7x200,2x201).
+Flash traffic-ff7e5d96-49d5-43ee-81cf-ae7dceddc43c:41requests(33x200,8x201).
+DDoS traffic-8d695b60-3ad6-478c-970b-ace77ca05a6c:77requests(all200).
+Mixed traffic-cdb4abf5-a78c-431b-91e6-ba99d8df29ce:77requests(73x200,4x201),
+19legitimate/58attack recorded separately. All4 have0errors/0unjoined and3CSVrows,
+including finalpartial. Stop test traffic-2369d02c-c9e0-41d0-baa7-c59773f947ba
+interrupted cleanly with15requests,0unjoined. SourceLive1793932379439 stopped,
+cleanup:true/no collectorError, bothgenerator/Live locksabsent. No mainDBwrites.
+30Node regressionsPASS; Gotests3.573s/vet/race4.291s/buildPASS; syntax/diffPASS.
+Final scheduler rounding and incomplete-join failure handling were reviewed;
+Node regressions rerun in final verification. README/FEATURE_SPEC/API contract
+and ARCHITECTURE record usage, labels, boundaries and collection limitations.
+Each run has isolateddataset/groundtruth. split_group_id retains sharedLive group
+to prevent leakage when reusing one runner. Default Markovfixture is not copied.
+Onlypilot implemented; bulk varieddata/training and distributedIP topology pending.
+No commit/push.
+
+## M2 v1 acceptance — user GUI and crash recovery (2026-11-06)
+
+User screenshot/transcript and retained session1793931659689 prove201/409HTTP2,
+numeric12features in eligible windows,closed39rows,cleanup:true,0duplicates,
+0latecompletions,0malformedlines,no collectorError and removed lock. Markov is
+verification-uniform-v1 fixture, probabilities0.25; not training observations.
+Agent replay of exact end2026-11-06T02:24:14.638Z matches original SHA256
+a64040776ee3f92cdfebe84393ccdcc809cd77e87823fd596dc93f2d97131663.
+Added scripts/tests/collector-crash.cjs. Actual isolated Node worker SIGKILL,
+two durable events plus damaged tail recovered; stale CSV replaced and second
+replay identical. Evidence .local-backups/m2/crash-1793931943854/recovery-result.json.
+NoLive/DB/browser actions in this follow-up. M2-01/02 bounded lab v1 acceptance
+complete; keep narrow fingerprints,100k-event/1hour limits and fixture caveats.
+Next user-owned work is scenario collection and session-aware training/reference
+preparation. Earlier IN_PROGRESS/GUI-stop notes below are historical.
+
+## M2 GUI verification and capture completion — 2026-11-06
+
+Computer-use skill applied through node_repl/@oai/sky. GUI session1793930731964
+registered201 then duplicate409 with HTTP/2.0; real JA4/H2 events and periodic CSV
+recorded. cleanup:true,67rows. Initial expired-cert attempt1793930635999 and
+compile-failure attempt1793930708285 cleaned up. Test runner now creates own cert.
+Added bounded UA family and numeric GREASE fields, exact reference profiles from
+known GUI Chrome, optional versioned Markov fixture/train reference and four-class
+label config. Reference snapshots stay with session. Added atomic manifest,
+overwrite refusal, malformed-IP filtering and late-completion reporting.
+Second session1793931318740 has11CSVrows, profile version and Markov fixture
+recorded, cleanup:true. Computer Use refused further UI actions because it could
+not confidently determine current Chrome URL. No more UI input was attempted.
+Loopback integration feature-lab-1793931296098 PASS:12requests,2peerIPs,10H2
+streams/clientIDs reconciled, query/static/upstream signals. First lab attempt
+had a client ready-event timing assertion; corrected by reading ID on response.
+8feature+5adapter tests PASS; Go tests3.438s/vet/race4.322s/build PASS.
+All ownLive processes stopped; session.lock absent. No mainDBwrites/commit/push.
+Still IN_PROGRESS: secondGUI/reference end-to-end and hard-kill recovery proof.
+Native configured certificate remains expired; test mode has isolated valid pair.
+
+## M2 pilot implementation — 2026-11-06
+
+Added scripts/lib/feature-window.cjs, scripts/replay-features.cjs and4tests;
+runner writes per-session dataset/events.jsonl, manifest.json and windows.csv.
+Telemetry adds upstream timer/query presence/static flag and TLS cipher/extension
+GREASE. FEATURE_SPEC records formulas, caps and remaining gaps. 23 Node tests PASS
+outside sandbox (Windows temp rename initially EPERM); Go test/vet/build PASS
+outside sandbox after schema assertion updated from19to22 and new fields asserted.
+Initial sandbox Go test session did not return output; no PASS inferred from it.
+No real browser/DB/traffic startup. M2 remains IN_PROGRESS: m_cross reference/UA,
+all-source GREASE, stream reconciliation and two-session/crash pilot pending.
+Pinned incremental skill fetch failed via web cache; repository guidance used.
+No commit/push. Next implement and verify the remaining capture/reference gaps
+before claiming a12-feature training-ready collector.
+
+## 06/11/2026 — lập kế hoạch M2
+
+Đã cập nhật kế hoạch M2-01/M2-02 sau phản biện ở đầu `tasks/current.md`: đơn vị phân loại là cửa sổ traffic bốn lớp, coverage theo đối tượng đo, CSV riêng mỗi phiên Live, đối soát/replay và phục hồi. Đầu ra dự kiến gồm bảng kiểm chứng 12 feature cùng mẫu CSV từ pilot nhỏ. Người dùng phụ trách thu đại trà và train. Hiện mới sửa kế hoạch. Bước triển khai đầu tiên là chốt hợp đồng cửa sổ và fixture IP/route trong FEATURE_SPEC.
+
 ## TEAM-LIVE complete prerequisites (2026-11-05)
 
 Recipient's missing Go error showed setup guidance needed one complete checklist.

@@ -1,0 +1,16 @@
+{
+  "version": "chrome-lab-20261106-v1",
+  "source": "Known Chrome lab GUI session 1793930731964; TLS/H2 joined by connection_id; Chromium-only initial coverage",
+  "entries": [
+    {
+      "ja4": "t13i1516h2_8daaf6152771_cb7bf5808d99",
+      "akamai_md5": "52d84b11737d980aef856699f885ca86",
+      "ua_families": ["chromium"]
+    },
+    {
+      "ja4": "t13i1517h2_8daaf6152771_e2d80978ab2e",
+      "akamai_md5": "52d84b11737d980aef856699f885ca86",
+      "ua_families": ["chromium"]
+    }
+  ]
+}

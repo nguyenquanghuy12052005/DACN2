@@ -23,6 +23,31 @@ func TestBrowserLabConfig(t *testing.T) {
 		t.Fatal("unsafe config exposed or accepted")
 	}
 }
+
+func TestTrafficLabRateBoundIsExplicit(t *testing.T) {
+	for _, traffic := range []bool{false, true} {
+		cfg := &browserLabConfig{origin: "http://127.0.0.1:5173", token: strings.Repeat("a", 64), ids: map[string]bool{"61": true}, trafficLab: traffic}
+		handler := browserLabHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) }), cfg)
+		limit := 30
+		if traffic {
+			limit = 300
+		}
+		for i := 0; i <= limit; i++ {
+			request := httptest.NewRequest("GET", "/courses", nil)
+			request.Header.Set("Origin", cfg.origin)
+			request.Header.Set("X-DACN2-Session", cfg.token)
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			want := 200
+			if i == limit {
+				want = 429
+			}
+			if response.Code != want {
+				t.Fatalf("traffic=%v request=%d got=%d want=%d", traffic, i, response.Code, want)
+			}
+		}
+	}
+}
 func TestBrowserLabBoundary(t *testing.T) {
 	token := strings.Repeat("a", 64)
 	cfg := &browserLabConfig{origin: "http://127.0.0.1:5173", token: token, ids: map[string]bool{"61": true}}

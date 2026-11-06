@@ -1,5 +1,130 @@
 # Gateway feature specification
 
+## Generator-attributed scenario export — 2026-11-06
+
+scripts/generate-traffic.cjs runs fixed-loopback, test-DB-only scenarios and
+exports a separate dataset under .local-backups/traffic/traffic-UUID/dataset/.
+T0 is recorded after all browser clients are prepared. Windowing uses the existing
+5s contract. Request IDs returned to each Chrome fetch select Gateway completions;
+TLS/H2 metadata are joined by their source-session connection IDs. The source Live
+logs are retained unchanged. Scenario/client IDs and legitimate/attack ground truth
+stay in separate generator files, outside12model inputs. dataset_scope declares
+generator_attributed_requests. source_gateway_session_id and split_group_id identify
+shared source state; all runs sharing that group must stay in one ML split.
+Labels use operator_scenario_intent provenance. Missing response IDs or missing
+joined completions clear the label and mark data_quality incomplete.
+Partial final windows retain duration status. Idle/full windows still appear.
+No Markov artifact is copied from Live, preventing fixture values from entering
+these scenario exports. Replay can later use a train-only reference.
+Both roles use installed Chrome; human clients alternate reads and fixture
+registration with500–1500ms think-time, bot clients repeat reads without think-time.
+Default offered caps are2actions/s Normal and8for the other cases; actual goodput
+is measured. Fixed templates are pilot workloads. API-only route restrictions keep
+query/static features constant in this version; single-host IP diversity is limited.
+
+## Bounded lab v1 acceptance — 2026-11-06
+
+The pending second-GUI and process-crash checks below are now satisfied.
+User session1793931659689 has39closedCSVrows,201/409HTTP2 screenshot evidence,
+cleanup:true and0duplicate/late/malformed events. Replay SHA256 exactly matches
+a64040776ee3f92cdfebe84393ccdcc809cd77e87823fd596dc93f2d97131663.
+Its eligible windows have numeric values for all12features using the explicitly
+marked Markov fixture. First-request IAT/Markov remain null. An IAT greater than
+5000ms is valid because intervals can cross window boundaries.
+scripts/tests/collector-crash.cjs killed a separate worker before clean shutdown,
+recovered2events from its log, detected1incomplete trailing line and reproduced
+the same CSV hash on repeated recovery. Evidence is under
+.local-backups/m2/crash-1793931943854/. This verifies process termination recovery
+from retained writes, with no claim about physical power-loss durability.
+M2-01/M2-02 are accepted for this bounded lab v1. Event/session caps, known-profile
+coverage, connection-local behavior and train-only reference requirements remain
+part of the contract. Dataset/scenario/model validation is M2-03 onward.
+
+## M2 implementation checkpoint — 2026-11-06
+
+Latest verification supersedes the initial pilot gaps below. Eight feature tests and
+five adapter tests PASS. Go full tests/vet/race/build PASS (3.438s / race4.322s).
+GUI Chrome session1793930731964 proved registration201, duplicate409, HTTP/2,
+joined JA4/H2 and periodic CSV; stop cleanup:true. Session1793931318740 proved
+separate CSV/reference snapshots and cleanup:true; GUI interaction in that second
+session was stopped by Computer Use URL-confidence enforcement.
+Loopback lab feature-lab-1793931296098 independently counted10 client stream IDs
+against10 Gateway H2 requests on one connection,12requests total from2peerIPs,
+query mix, static ratio1/12 and real upstream timing. Eight tests include all12
+numeric formulas with fixed reference inputs, nulls, malformed IP, unknown pairs,
+cross-window IAT, late-event revision, duplicate/replay hash and damaged log recovery.
+
+UA family is now emitted as chromium/firefox/safari/unknown, never raw UA.
+m_cross is mean mismatch on request pairs recognized by the exact JA4 + Akamai
+MD5 profiles in scripts/data/fingerprint-profiles.json. Initial profile version
+chrome-lab-20261106-v1 covers two observed Chromium fingerprints from the known
+GUI browser session. Unknown pairs stay null with coverage0. Copy reference files
+into every dataset session so future changes do not silently alter old sessions.
+GREASE v1 now checks ciphers/extensions/supported versions/groups/signature schemes.
+ALPN byte strings are outside this explicit numeric definition.
+Optional DACN2_MARKOV_REFERENCE points to a versioned local JSON reference with
+kind fixture or train_reference. Fixture output is marked markov_kind:fixture
+and must be excluded from training. Production references declare train_session_ids;
+replay refuses overlap when the dataset manifest explicitly declares holdout or
+validation. Actual split correctness remains the training pipeline's responsibility.
+Optional DACN2_WINDOW_LABEL accepts only the four project classes and records
+operator_declared provenance. Default labels remain empty.
+Test-DB runner generates a separate per-session certificate. This enabled GUI
+verification after the configured native certificate expired, without replacing it.
+Native non-test startup still requires a valid configured certificate.
+
+Remaining acceptance: finish GUI verification in the second session, validate
+end-to-end numeric m_cross/reference behavior beyond unit fixtures, and record a
+hard-kill/recovery pilot. M2 remains IN_PROGRESS. Existing per-session memory/event
+bounds and limited profile coverage apply.
+
+Current implementation is a bounded pilot collector in scripts/lib/feature-window.cjs.
+Each session starts T0 at collector creation, UTC; windows are [T0+5k,T0+5(k+1)).
+Requests are assigned by started_at. Health (/health and /gateway/health) and OPTIONS
+are excluded; other request outcomes are retained. Every window through shutdown is
+exported, including empty windows. The final shorter window is partial.
+Request ID deduplicates completions within one session. connection_id belongs to that
+session only. IP uses the TCP peer. IAT and Markov use connection-local sequences,
+ordered by started_at then request ID for ties. The later request owns a cross-window
+interval/transition. Concurrent requests are ordered observations, not authenticated
+user navigation. IP coverage in loopback labs must be reviewed before training.
+
+| Feature | Formula/unit | Eligibility and current evidence |
+|---|---|---|
+| r_no_grease | non-GREASE connections / eligible connections | numeric ClientHello fields; Go per-field tests and real Chrome GREASE |
+| rho_ja4 | distinct JA4 / distinct IP | same request subset joined to TLS; ratio can exceed one |
+| m_cross | mean of mismatch0/1 on known pairs | bounded UA enum plus exact JA4/H2 reference; unknown pairs excluded with coverage |
+| s_mux | H2 requests / active H2 connections | 10 issued client stream IDs matched10handler requests, sequential and concurrent |
+| h_ip | -sum(p log2 p), bit | requests with peer IP |
+| h_uri | -sum(p log2 p), bit | bounded route templates, including unknown |
+| h_query | -sum(p log2 p), bit | none/present query classes v1; values never retained |
+| r_static | static requests / eligible requests | case-insensitive path suffix css/js/png/jpg/svg/ico/woff2; useful only for paths observed by Gateway |
+| r_ip | requests with IP / distinct IP | invalid/missing peers excluded and counted in coverage |
+| iat | arithmetic mean consecutive gaps, ms | connection-local, equally weighted intervals across connections |
+| l_markov | arithmetic mean ln P(next route given previous) | supplied train-only reference; fixture supports unseen_probability; live defaults null |
+| t_up | mean time from RoundTrip entry to response headers, ms | includes successful transport responses with backend 4xx/5xx; transport errors excluded |
+
+Empty denominators produce empty CSV cells (null) plus missing_reasons, while observed
+zeros remain zero. coverage contains valid request/IP/query/static/TLS/GREASE and
+connection counts. A complete window denotes full duration only, not full capture.
+The current schema does not certify lossless capture or model readiness.
+
+Every five seconds the bounded session log is replayed to replace windows.csv via
+a flushed temporary file. Later completions revise their original windows on the
+next replay. Stop performs a final replay. Replay of identical inputs/end time is
+deterministic. Resource limits: 100,000 selected events, 1 MiB input fragment,
+one-hour session. Exceeding limits stops the Live session with collectorError.
+These pilot limits must be revised through a separately tested streaming design
+before bulk collection. Files are under .local-backups/ui-live/SESSION/dataset/.
+Recovery command: node scripts/replay-features.cjs DATASET_DIR END_UTC [MARKOV_JSON].
+Replay counts malformed lines, skips them, and records CSV hash. Recovery never
+certifies completeness of a truncated source. Disk exhaustion/error remains visible.
+Markov JSON must be a trusted local artifact with version, transitions[from][to]
+and unseen_probability in (0,1]. Fit it only after session splits.
+
+Remaining acceptance is listed in the latest verification above. M2-01/M2-02
+remain IN_PROGRESS until those checks are finished.
+
 ## UI-03c explanatory inventory — 2026-11-01
 
 Dashboard's fingerprint explorer now lists the 12 planned features from the master

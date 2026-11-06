@@ -35,6 +35,7 @@ type h2ObservationManager struct {
 }
 
 type tlsFingerprintEvent struct {
+	HasGrease      bool   `json:"has_grease"`
 	SchemaVersion  int    `json:"schema_version"`
 	Event          string `json:"event"`
 	ConnectionID   uint64 `json:"connection_id"`
@@ -65,7 +66,8 @@ func (l *observedTLSListener) Accept() (net.Conn, error) {
 	config.GetConfigForClient = func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
 		if l.manager.reportTLS != nil {
 			f := ja4Variants(hello)
-			l.manager.reportTLS(tlsFingerprintEvent{SchemaVersion: 1, Event: "gateway_tls", ConnectionID: id, JA4: f.JA4, JA4Raw: f.Raw, JA4Original: f.Original, JA4RawOriginal: f.RawOriginal})
+			grease := clientHelloHasGREASE(hello)
+			l.manager.reportTLS(tlsFingerprintEvent{SchemaVersion: 1, Event: "gateway_tls", ConnectionID: id, JA4: f.JA4, JA4Raw: f.Raw, JA4Original: f.Original, JA4RawOriginal: f.RawOriginal, HasGrease: grease})
 		}
 		if original != nil {
 			return original(hello)

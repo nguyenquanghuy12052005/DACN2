@@ -18,6 +18,7 @@ import (
 type browserLabConfig struct {
 	origin, token string
 	ids           map[string]bool
+	trafficLab    bool
 }
 
 var decimalID = regexp.MustCompile(`^[1-9][0-9]{0,15}$`)
@@ -32,6 +33,11 @@ func readBrowserLabConfig(getenv func(string) string) (*browserLabConfig, error)
 		return nil, fmt.Errorf("invalid browser lab origin/session configuration")
 	}
 	cfg := &browserLabConfig{origin: origin, token: token, ids: make(map[string]bool)}
+	trafficMode := getenv("DACN2_TRAFFIC_LAB")
+	if trafficMode != "" && trafficMode != "1" {
+		return nil, fmt.Errorf("invalid traffic lab mode")
+	}
+	cfg.trafficLab = trafficMode == "1"
 	for _, id := range strings.Split(ids, ",") {
 		if !decimalID.MatchString(id) {
 			return nil, fmt.Errorf("invalid browser lab fixture configuration")
@@ -122,7 +128,11 @@ func browserLabHandler(next http.Handler, cfg *browserLabConfig) http.Handler {
 			count = 0
 		}
 		count++
-		limited := count > 30
+		limit := 30
+		if cfg.trafficLab {
+			limit = 300
+		}
+		limited := count > limit
 		mu.Unlock()
 		if limited {
 			deny(429, "LAB_ACTION_LIMIT")

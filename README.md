@@ -1,5 +1,65 @@
 # DACN2 — L7 cyber-defense lab
 
+## Tạo traffic bốn kịch bản và lưu CSV
+
+Terminal thứ nhất, từ thư mục dự án:
+
+```powershell
+node scripts/dashboard-live.cjs --test-db --traffic-lab --no-browser
+```
+
+Chờ báo DEMO TRỰC TIẾP. Terminal thứ hai chạy từng lệnh:
+
+```powershell
+node scripts/generate-traffic.cjs Normal
+node scripts/generate-traffic.cjs Flash_Crowd
+node scripts/generate-traffic.cjs Pure_L7_DDoS
+node scripts/generate-traffic.cjs Mixed_Traffic
+```
+
+Mỗi lệnh mặc định chạy20giây, dùng Chrome headless đã cài. Client hợp lệ xem
+danh sách môn và định kỳ đăng ký fixture; client tấn công mô phỏng lặp request
+đọc. Normal dùng1client, Flash4client, DDoS4client, Mixed2hợp lệ+2tấn công.
+Thời gian nghỉ hợp lệ500–1500ms. Mỗi lượt có thư mục riêng dưới
+`.local-backups/traffic/traffic-UUID/`, gồm `manifest.json`,
+`ground-truth.jsonl` và `dataset/windows.csv` cùng event nguồn để replay.
+
+Điều chỉnh thời lượng, trần dispatch và seed:
+
+```powershell
+node scripts/generate-traffic.cjs Mixed_Traffic --seconds=60 --rps=8 --seed=42
+```
+
+Trần dispatch là tổng số thao tác/giây, tối đa20. Thời lượng5–300giây,
+tối đa4client/inflight của generator. Think-time hoặc client bận có thể làm
+goodput thấp hơn trần; manifest ghi số thao tác bị bỏ lượt, lỗi và HTTP status.
+Chỉ Gateway cố định127.0.0.1:18444 và DB test được phép. Mở Chrome demo thủ công
+cùng lúc sẽ tạo event riêng trong Live, nhưng CSV generator chỉ chọn request
+đối soát được bằng request ID của chính generator.
+
+Dừng generator bằng Ctrl+C, hoặc terminal khác:
+
+```powershell
+node scripts/generate-traffic.cjs stop
+```
+
+Generator đóng các context/browser của nó. Khi đã chạy xong, dừng Live để dọn
+fixture test:
+
+```powershell
+node scripts/dashboard-live.cjs stop
+```
+
+CSV dùng12feature hiện có. Nhãn biểu thị kịch bản do người vận hành chọn, có
+ground truth cấp request lưu riêng. Thiếu request ID/không ghép được event thì
+dataset để trống nhãn và ghi incomplete. Markov fixture của Live không được
+chép vào CSV generator; l_markov chờ bảng tham chiếu train-only.
+Các lượt này là pilot local, IP phần lớn chungloopback và API chưa có biến thiên
+query/tài nguyên tĩnh. Dùng nhiều phiên độc lập và kiểm tra chất lượng trước khi
+thu đại trà. Khi chia train/test, nhóm theo `split_group_id` (phiên Gateway gốc);
+để có nhóm độc lập, dừng rồi mở Live mới giữa các phiên thu. Loại cửa sổ partial
+khỏi tập train chính hoặc xử lý riêng theo đặc tả.
+
 ## Clone và chạy Live giống máy tác giả (Windows)
 
 Chuẩn bị **đầy đủ một lần** trên máy nhận source:

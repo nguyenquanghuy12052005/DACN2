@@ -8,15 +8,19 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"flag"
 	"log"
 	"math/big"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 )
 
 func main() {
-	for _, name := range []string{"/out/cert.pem", "/out/key.pem"} {
+	output := flag.String("out", "/out", "existing output directory for the local lab pair")
+	flag.Parse()
+	for _, name := range []string{filepath.Join(*output, "cert.pem"), filepath.Join(*output, "key.pem")} {
 		if _, err := os.Stat(name); !os.IsNotExist(err) {
 			log.Fatal("refuse to replace an existing certificate/key")
 		}
@@ -46,10 +50,10 @@ func main() {
 		log.Fatal(err)
 	}
 	// Host directory is private; file mounts must be readable by nonroot Gateway.
-	if err := os.WriteFile("/out/key.pem", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: private}), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(*output, "key.pem"), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: private}), 0644); err != nil {
 		log.Fatal(err)
 	}
-	if err := os.WriteFile("/out/cert.pem", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(*output, "cert.pem"), pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), 0644); err != nil {
 		log.Fatal(err)
 	}
 }

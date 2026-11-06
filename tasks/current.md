@@ -1,5 +1,80 @@
 # Current milestone
 
+M2-03…05 generator pilot (2026-11-06): implemented four bounded Chrome scenarios
+in scripts/generate-traffic.cjs. Fixed loopback18444, active dacn2_test and explicit
+--traffic-lab required. At most4clients/20actionspersecond/300seconds, fixed
+dispatch interval/no backlog, Ctrl+C or stop.request and browser cleanup.
+Each run saves separate request ground truth, manifest and attributed12featureCSV.
+Incomplete request joins clear labels; split_group_id groups shared Gateway state.
+Actual10s pilots PASS: Normal9requests,Flash41,DDoS77,Mixed77;0errors/0unjoined,
+3CSVrows each including partialfinal. Mixed19legitimate/58attack. Stop test
+interrupted at15requests,0unjoined. Source1793932379439cleanup:true,locksabsent.
+30Node tests and Go tests/vet/race/build PASS; syntax/diff checks PASS.
+Evidence in .local-backups/traffic/traffic-*/; see README commands.
+M2-06 bulk diverse-session collection remains pending: these are low-load,
+single-host/API-only scenario-intent pilots. No saturation, trained-model,
+query/static variation or realistic distributed IP claim. Do not call dataset complete.
+
+M2-01/M2-02 bounded lab v1 acceptance (2026-11-06): PASS in documented scope.
+User GUI session1793931659689 proves Chrome201/409/H2 and all12numeric outputs
+where eligible (Markov fixture). Closed39rows,cleanup:true,no collectorError,
+0duplicates/late/malformed,session.lock absent. Agent replay exactly matches
+a64040776ee3f92cdfebe84393ccdcc809cd77e87823fd596dc93f2d97131663.
+Real child SIGKILL recovery PASS: .local-backups/m2/crash-1793931943854/
+recovery-result.json; recovers2events,detects1damagedtail,repeatCSVhashidentical.
+Acceptance supersedes pending secondGUI/crash notes below. Current deliverable
+is bounded collector with narrow Chromium reference coverage and nullable Markov
+until a train-only artifact is provided. M2-03 onward bulk collection and actual
+model training remain user's next work; no dataset/model readiness claim.
+
+Latest M2 (2026-11-06): GUI Chrome201/409/H2 session1793930731964 PASS,
+cleanup:true/67CSVrows. Second1793931318740 starts/stops with profile+Markov fixture
+snapshots,cleanup:true/11rows; Computer Use blocks further UI due URL-confidence.
+Lab feature-lab-1793931296098 reconciles10H2clientstreamIDs/10Gatewayrequests,
+12requests/2peerIPs/query/static/upstream PASS.8feature+5adapter tests and
+Go tests/vet/race/build PASS. UA-family/reference matching and numeric GREASE
+implemented; unknown fingerprints remain unavailable. Test-mode per-session cert
+works around expired native configured certificate. All own sessions stopped.
+M2 remains IN_PROGRESS: finish secondGUI/reference proof and hard-kill recovery.
+
+M2 implementation checkpoint (2026-11-06): IN_PROGRESS. Added bounded pilot
+feature-window collector/replay and automatic CSV snapshots every5s in native/team
+Live runner, with raw JSONL/manifest and stop-time reconciliation. Added Gateway
+GREASE(ciphers/extensions), query presence/static suffix and upstream headers timing.
+23 Node regressions PASS; Go tests/vet/build PASS (3.359s full tests); runner syntax
+and diff checks PASS. Four new tests cover hand calculations/nulls/Markov/cross-window
+IAT and replay/dedup/boundaries/damaged line/hash equality. No browser/DB/traffic run.
+Still pending m_cross UA/reference, complete GREASE scope, true stream reconciliation,
+two actual Live sessions, crash proof and final feature evidence matrix. Limits
+100k events/1h are pilot bounds. M2-01/M2-02 are not complete. See FEATURE_SPEC.
+
+## Kế hoạch thu dữ liệu M2 (06/11/2026)
+
+Trạng thái: đã lập kế hoạch. Collector, dữ liệu pilot và dataset huấn luyện còn chờ triển khai. Các lựa chọn dưới đây là đề xuất để kiểm chứng ở M2-01.
+
+1. **M2-01 — chốt hợp đồng đo.** Trong `docs/FEATURE_SPEC.md` ghi đơn vị, đối tượng đếm, tử/mẫu số, event/trường nguồn, miền giá trị, độ bao phủ, lý do thiếu và ví dụ tính tay cho từng feature. Dùng cửa sổ UTC 5 giây không chồng lấn theo `started_at`, loại probe/health và CORS preflight, giữ request workload lỗi. Chốt thời hạn chờ event hoàn tất, xử lý event trùng/trễ/mất và kết nối mở từ cửa sổ trước. Ghi thay đổi schema có version trong `docs/API_CONTRACT.md`. IP lấy từ TCP peer. Nối TLS/H2 với request bằng phiên Gateway + connection ID. Với chuỗi hành vi, thử nhóm theo kết nối và đo mức phân mảnh khi browser mở nhiều kết nối trước khi chốt khóa nhóm.
+   - Một dòng đại diện toàn bộ traffic Gateway trong một cửa sổ của một lần chạy lab (`session_id`). Nhãn tùy chọn `window_label` thuộc Normal, Flash_Crowd, Pure_L7_DDoS, Mixed_Traffic. Phiên Live thông thường để trống nhãn. Ground truth bot/hợp lệ theo client hoặc request nằm riêng phía generator.
+   - Quy ước đề xuất để kiểm thử: lấy thời điểm mở phiên UTC làm T0, dùng [T0+5k, T0+5(k+1)) giây. Xuất cả cửa sổ rỗng trong thời gian quan sát, đánh dấu cửa sổ cuối thiếu thời lượng. Chốt giới hạn bộ nhớ và thời gian chờ event muộn trước khi viết collector.
+2. **M2-02 — bổ sung tín hiệu và tự ghi CSV mỗi lần chạy Live.** Dùng chung collector cho dashboard-live và team-live. Làm theo từng nhóm dưới đây, mỗi nhóm có fixture và kết quả tính tay.
+   - `r_ip, h_ip, h_uri`: đếm request theo IP và route template, tính request/IP và entropy log2. Kiểm tra hai IP xuất hiện đều cho entropy 1 bit.
+   - `rho_ja4, r_no_grease, m_cross`: nối JA4 của kết nối phục vụ request với IP. Bổ sung cờ GREASE từ ClientHello trước bước lọc và phân loại họ UA tại Gateway. Phiên bản hóa bảng so khớp UA–TLS/H2, trả unknown cho mẫu chưa biết. Đếm GREASE theo kết nối quan sát đủ để tránh một kết nối nhiều request lấn át mẫu.
+   - `s_mux`: đo stream H2 mang request trên mỗi kết nối H2 đang phục vụ trong cửa sổ. Đối soát nhiều request đồng thời trên một kết nối với capture độc lập trước khi dùng event handler làm đại diện cho stream. HTTP/1 ghi không áp dụng.
+   - `h_query, r_static`: phân nhóm query an toàn tại nguồn (chốt nhóm không query, tên tham số cho phép và nhóm khác), tính entropy theo nhóm đã công bố. Gắn loại tài nguyên và đưa tài nguyên tĩnh của kịch bản qua Gateway. Kiểm tra với traffic có/không query và có cả API lẫn tài nguyên tĩnh. Không lưu giá trị query thô.
+   - `iat, l_markov`: giữ timestamp bắt đầu và thứ tự route trong từng chuỗi. Tính khoảng cách giữa request liên tiếp. Giữ lại chuyển tiếp route để tính log-xác suất Markov sau khi chia phiên. Fit bảng tham chiếu trên các phiên Normal thuộc train, dùng cùng bảng cho holdout/inference. Chốt smoothing, trọng số, thứ tự khi đồng thời và quy tắc qua biên cửa sổ.
+   - `t_up`: thêm timer đơn điệu tại transport từ lúc bắt đầu RoundTrip tới khi nhận response headers, tính trung bình ms trên lượt có phản hồi. Công bố ranh giới đo gồm cả đường truyền đến upstream. Timeout không sinh latency bằng 0.
+3. **Pilot có đối soát.** Trong lab được phép, chạy phiên nhỏ có nhiều IP peer thực sự phân biệt được, browser HTTP/2, client HTTP/1, kết nối tái sử dụng, đọc/ghi, query và tài nguyên tĩnh. Nếu tất cả chung loopback, sửa topology trước khi thu đại trà. Xuất raw event có giới hạn, manifest phiên và bảng cửa sổ. Kiểm tra biên 5 giây, duplicate, thiếu TLS/H2, cửa sổ rỗng, probe và request lỗi. Mỗi feature phải có ít nhất một ví dụ đo được đối chiếu đúng và ca thiếu phù hợp. Với Markov dùng bảng cố định dành riêng cho fixture. Báo cáo coverage theo feature/giao thức. Phân biệt null + lý do với số 0 thực đo.
+4. **M2-03…06 — thu bốn lớp.** Mỗi phiên ghi session_id, seed, phiên bản, cấu hình, topology, khoảng thời gian và kịch bản. Chạy Normal, Flash Crowd, Pure L7 DDoS, Mixed ở nhiều phiên độc lập, thay đổi cường độ, số client và lịch thao tác. Có phiên Flash và DDoS gần nhau về RPS. Tránh gắn riêng một tool với một nhãn. Mục tiêu tham chiếu khoảng 25 phiên, 2.400–3.600 cửa sổ. Đặt trần RPS/concurrency/thời lượng/tài nguyên, điều kiện dừng và kiểm tra cleanup trước mỗi lần chạy. Ghi nhãn cửa sổ riêng với ground truth client/request phía generator. Đánh dấu cửa sổ chuyển pha mơ hồ.
+5. **M2-07 — nghiệm thu dataset.** Chia train/validation/holdout bằng session_id trước mọi bước học từ dữ liệu. Tạo đủ 12 cột theo thứ tự cố định, ghép nhãn và giữ metadata/ground truth ngoài đầu vào model. Lưu manifest split, version feature, artifact Markov và hướng dẫn tái tạo. Kiểm tra phiên không chồng giữa các tập, số cửa sổ theo lớp, phân bố/coverage từng feature theo lớp và đối soát ngược về raw log. Nếu một feature thiếu toàn bộ hoặc chỉ xuất hiện ở một lớp do cách tạo tải, sửa nguồn và thu lại phiên bị ảnh hưởng.
+
+**Tiêu chí bàn giao M2-01 và M2-02**
+
+- Mỗi phiên có thư mục riêng chứa `windows.csv` (12 cột feature theo thứ tự cố định, nhãn tùy chọn, metadata và khóa truy vết), `events.jsonl` (event nguồn giới hạn trường) và `manifest.json` (phiên bản schema/công thức, thống kê và trạng thái kết thúc). Thiếu bảng Markov thì để trống l_markov với lý do, lưu chuyển tiếp đủ để tính lại bằng bảng có version sau khi chia phiên.
+- Ghi dần cửa sổ ra đĩa. Đối soát cuối phiên theo started_at từ log nguồn, khử trùng theo khóa event, thay file kết quả sau khi bản tính lại hoàn tất. Test replay cùng log cho cùng số dòng và giá trị, event tới sau khi ghi CSV, dừng đột ngột, phát hiện dòng ghi dở và phục hồi từ phần log còn nguyên.
+- Đo coverage theo đúng mẫu số: kết nối TLS đủ điều kiện với GREASE, request đánh giá được với UA, lượt upstream nhận headers với t_up (kể cả 409). Tách timeout và lỗi kết nối. Test nhiều request trên ít kết nối, cả H2 tuần tự và đồng thời: s_mux đo số stream/kết nối. Với iat ghi rõ trọng số từng khoảng và cửa sổ nhận khoảng qua biên.
+- Bàn giao bảng 12 dòng ghi công thức, đơn vị, nguồn, lý do thiếu, test, kết quả kỳ vọng/thực tế và mức bằng chứng (fixture hoặc lab). Chạy hai phiên nhỏ để xác minh file riêng từng phiên, lệnh Live thông thường và khả năng truy về event. Báo rõ các ca chưa kiểm chứng.
+
+Phạm vi giao cho trợ lý là M2-01, M2-02 và kiểm chứng nhỏ. Các mục 4–5 là lộ trình tiếp theo cho người dùng tự thu dữ liệu quy mô lớn và chuẩn bị train. Bước triển khai đầu tiên sau lượt lập kế hoạch là viết hợp đồng cửa sổ và fixture cho `r_ip, h_ip, h_uri`.
+
 TEAM-LIVE prerequisite follow-up (2026-11-05): user requests complete setup
 notes after recipient hit missing Go. README now enumerates all Windows tools,
 versions/PATH, Chrome install location, Docker/WSL2/Linux/Compose, network/ports.
