@@ -44,6 +44,7 @@ let db,
   lockOwned = false,
   finalizing,
   stopWatch;
+let gatewayAgent;
 let initializing = true,
   stopRequested = false;
 const report = {
@@ -165,6 +166,7 @@ async function shutdown(code = 0) {
     clearInterval(stopWatch);
     clearInterval(collectorTimer);
     adapter?.close();
+    gatewayAgent?.destroy();
     if (server) await server.close();
     for (const c of [...children].reverse()) await stopChild(c);
     if (collector) {
@@ -309,6 +311,7 @@ process.on('SIGTERM', () => requestStop());
           ? undefined
           : Error('Lab certificate mismatch'),
     });
+    gatewayAgent = agent;
     const requestGateway = (method, route, body) =>
       new Promise((resolve, reject) => {
         const data = body ? JSON.stringify(body) : undefined;

@@ -1,5 +1,79 @@
 # DACN2 — L7 cyber-defense lab
 
+## Thu dữ liệu và chuẩn bị train — collector v2
+
+CSV v2 đo lại theo định nghĩa trong `docs/FEATURE_SPEC.md`: GREASE tính theo
+request; query dùng HMAC thay vì cờ có/không; stream H2 đếm từ HEADERS; IAT và
+độ trễ upstream toàn body dùng **giây**. Không trộn CSV v1 với v2. Dữ liệu cũ
+được giữ nguyên để đối chiếu, không tự gán nhãn hay điền số0 cho chỗ thiếu.
+
+Máy mới chạy `scripts/team-live.ps1` một lần để chuẩn bị dependencies/DB/cert.
+Nếu đang mở Live đăng ký thật, dừng phiên đó trước khi thu (đăng ký vẫn được giữ):
+
+```powershell
+node scripts/dashboard-live.cjs stop --team-db
+```
+
+**Chạy thử ngắn** cả4kịch bản, tạo3nhóm Gateway độc lập:
+
+```powershell
+node scripts/collect-dataset.cjs --sessions=3 --seconds=20 --seed=1
+```
+
+**Đợt thu mục tiêu** theo số lượng trong báo cáo:
+
+```powershell
+node scripts/collect-dataset.cjs --sessions=25 --seconds=180 --seed=100
+```
+
+Lệnh thứ hai chạy khoảng **5 giờ cộng thời gian khởi động**; không tự chạy khi
+build/mở web. Mỗi nhóm tự mở test Live mới, chạy4kịch bản, dừng và dọn fixture.
+Chỉ ghi `dacn2_test`, không đăng ký vào DB chính. Tối đa4client,20thao tác/giây,
+300giây/kịch bản,30nhóm/lệnh. Ctrl+C yêu cầu dừng và dọn các tiến trình do lệnh
+đó tạo; các phiên đã hoàn thành được giữ lại. Không tự dừng phiên Live của người
+khác. PostgreSQL Docker phải đang chạy, các cổng Live phải trống.
+
+Mỗi kịch bản có Chrome và Node HTTP/2 (mặc định `--engine=mixed`), dùng địa chỉ
+nguồn loopback riêng **thật**. Chrome qua tunnel CONNECT chỉ tới Gateway local:
+TLS vẫn kết thúc tại Gateway, không giả IP bằng X-Forwarded-For. Calibration
+client chuẩn thực hiện trước T0 và được giữ riêng; unknown fingerprint không
+được tự coi là khớp. Luồng thay đổi giữa truy cập API, query, HTML và CSS/JS/SVG
+do Gateway lab phục vụ. Bot có cả mẫu API và crawling tài nguyên; vai trò và
+engine đều được ghi ngoài vector feature. Đây là các kịch bản lab có kiểm soát,
+không chứng minh bão hoà hay DDoS thực tế ở150–450RPS.
+
+Raw logs/CSV từng lượt nằm trong `.local-backups/traffic/traffic-UUID/dataset/`.
+Nhật ký điều phối và bản chuẩn bị train ở
+`.local-backups/traffic-batches/batch-UUID/`. Có thể kiểm tra lại corpus bằng:
+
+```powershell
+node scripts/prepare-training.cjs .local-backups/traffic .local-backups/training/my-first-review
+```
+
+Output phải là thư mục mới. Xem `quality-report.json`: lệnh trả exit1 nếu
+`ready:false`; đó là **dữ liệu chưa đạt**, không phải đã train thành công.
+Receipt liệt kê các nguồn/dòng bị loại, feature thiếu, số phiên, số cửa sổ,
+tỷ lệ browser hợp lệ, biến thiên feature và nhóm train/validation/test.
+Ngưỡng v2 yêu cầu ≥25nhóm Gateway độc lập, ≥2400cửa sổ đủ điều kiện, đủ4lớp
+trong mỗi tập, ≥2engine và ≥2IP quan sát mỗi lớp, ≥50%request hợp lệ từ Chrome,
+và cả12feature có biến thiên. Các ngưỡng này là cổng kiểm tra lab, không phải
+bằng chứng đạt F1/FPR trong báo cáo; dải giá trị giả thuyết không bị ép vào data.
+
+Chỉ khi đạt cổng kiểm tra mới có `train-X.csv`, `train-y.csv`,
+`validation-X.csv`, `validation-y.csv`, `test-X.csv`, `test-y.csv` và metadata
+nhóm đi kèm. X chỉ chứa12feature đúng thứ tự; y dùng0Normal/1Flash/2DDoS/3Mixed.
+`schema.json` ghi thứ tự, đơn vị và label map. `markov-reference.json` chỉ học
+từ Normal trong **nhóm train**; không dùng fixture hoặc validation/test.
+Nếu làm GroupKFold/SMOTE sau này, cần fit lại Markov/preprocessing/resampling
+riêng trong từng training fold; không tái dùng reference của toàn train cho CV.
+
+Các nguồn lỗi, thiếu nhãn, v1, thiếu capture hoặc sai hash bị loại có ghi lý do.
+Cửa sổ rỗng/partial/thiếu feature không vào X. Chỉ có request tài nguyên tĩnh
+thì `t_up` thiếu là đúng vì không gọi backend; không điền latency giả.
+IP loopback còn khác LAN/Internet; định nghĩa client theo peer IP không phân biệt
+người dùng chung NAT. Cần bổ sung thử nghiệm độc lập/đa dạng tải và đánh giá model
+trước khi công bố khả năng phân biệt Flash Crowd/DDoS ngoài phạm vi lab này.
+
 ## Tạo traffic bốn kịch bản và lưu CSV
 
 Terminal thứ nhất, từ thư mục dự án:

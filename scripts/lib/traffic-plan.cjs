@@ -1,7 +1,7 @@
 'use strict';
 
 const scenarios = {
-  Normal: { human: 1, bot: 0, rps: 2 },
+  Normal: { human: 2, bot: 0, rps: 2 },
   Flash_Crowd: { human: 4, bot: 0, rps: 8 },
   Pure_L7_DDoS: { human: 0, bot: 4, rps: 8 },
   Mixed_Traffic: { human: 2, bot: 2, rps: 8 },
@@ -10,9 +10,13 @@ const scenarios = {
 function parseOptions(args) {
   const [scenario, ...flags] = args;
   if (!Object.hasOwn(scenarios, scenario)) throw Error('Choose Normal, Flash_Crowd, Pure_L7_DDoS or Mixed_Traffic');
-  const options = { scenario, seconds: 20, seed: 1, ...scenarios[scenario] };
+  const options = { scenario, seconds: 20, seed: 1, engine: 'mixed', ...scenarios[scenario] };
   const seen = new Set();
   for (const flag of flags) {
+    if (flag.startsWith('--engine=')) {
+      if(seen.has('engine') || !['chrome','node','mixed'].includes(flag.slice(9))) throw Error('Use --engine=chrome|node|mixed');
+      seen.add('engine');options.engine=flag.slice(9);continue;
+    }
     const match = /^--(seconds|rps|seed)=(\d+)$/.exec(flag);
     if (!match || seen.has(match[1])) throw Error('Use unique --seconds=N --rps=N --seed=N');
     seen.add(match[1]);

@@ -134,7 +134,7 @@ function createLiveAdapter({
               };
             continue;
           }
-          if (e.event !== 'gateway_request' || e.schema_version !== 1) continue;
+          if (e.event !== 'gateway_request' || ![1, 2].includes(e.schema_version)) continue;
           if (
             typeof e.request_id !== 'string' ||
             !/^[a-f0-9]{32}-\d+$/.test(e.request_id) ||
@@ -164,7 +164,9 @@ function createLiveAdapter({
             result:
               e.outcome === 'proxy_error'
                 ? 'Lỗi chuyển tiếp'
-                : 'Backend phản hồi',
+                : e.route_kind === 'gateway_local'
+                  ? 'Gateway phản hồi'
+                  : 'Backend phản hồi',
             connectionId: Number.isInteger(e.connection_id)
               ? e.connection_id
               : null,

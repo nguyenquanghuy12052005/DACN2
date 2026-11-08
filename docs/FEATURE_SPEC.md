@@ -1,5 +1,62 @@
 # Gateway feature specification
 
+## Training contract v2 — 2026-11-08
+
+User requested report-aligned measurements and an enforced training-data boundary.
+New captures use traffic-window.v2; historical v1 CSVs remain unchanged and are
+not silently relabelled or interpreted with v2 units. The report's hypothesized
+ranges are hypotheses, not acceptance thresholds or values to manufacture.
+
+| Feature | v2 definition |
+|---|---|
+| r_no_grease | requests joined to TLS without GREASE / requests joined to TLS |
+| rho_ja4 | distinct joined JA4 / distinct joined TCP peer IP |
+| m_cross | mismatch fraction among recognized versioned JA4/H2/UA-family pairs; unknown is missing with coverage |
+| s_mux | distinct observed initial client HEADERS stream IDs / H2 connections in the 5-second window; not instantaneous concurrency |
+| h_ip | Shannon entropy, log2, of request counts by TCP peer IP |
+| h_uri | Shannon entropy of normalized base routes |
+| h_query | Shannon entropy of per-instance HMAC digests of exact encoded query strings, including an explicit empty-query class; never raw query values |
+| r_static | static-resource requests / eligible requests, all observed at Gateway |
+| r_ip | requests / active peer IP / 5 seconds, req/s/IP |
+| iat | mean successive request-start gaps per TCP peer IP, seconds; reconnects preserve the observed peer sequence |
+| l_markov | mean natural log transition probability per observed peer sequence; Laplace-smoothed reference fitted from Normal training groups only |
+| t_up | mean elapsed upstream RoundTrip-to-body-EOF, seconds, excluding transport errors/incomplete body reads; includes gateway body-read pacing, not pure backend CPU time |
+
+Peer IP is an observed network endpoint, not an authenticated user. NAT and a
+single localhost browser do not supply a diverse training population. The
+restricted traffic lab may serve fixed HTML/CSS/JS/SVG at Gateway and vary bounded
+queries; ordinary registration routes remain unchanged. Any transport helpers
+must preserve end-to-end browser TLS and bind real loopback source addresses;
+X-Forwarded-For never creates source-IP diversity.
+
+Raw events, versioned profile references and generator request ground truth are
+retained for replay. Scenario labels express controlled generator intent, not
+evidence of real-world attack saturation. Unjoined/error/interrupted scenarios
+cannot receive a valid label. Empty, partial, unlabelled, malformed, incomplete
+capture or missing-feature windows are excluded from training exports.
+
+Training preparation groups by source Gateway session before deriving a Markov
+reference or any preprocessing. Train/validation/test groups must be disjoint;
+only explicitly labelled Normal training events may fit the Markov reference.
+Fixture references are forbidden. IDs, labels, tool identifiers and ground truth
+never enter X (exactly the 12 ordered feature columns). y and group metadata are
+separate. Every export writes a quality receipt and refuses a readiness claim
+when class/session/tool/IP diversity or feature variation is insufficient.
+
+Verification plan: hand-calculated weighted GREASE, query distinctions, units,
+reconnect IAT and train-only Markov; delayed-body upstream timing; fragmented H2
+stream counts and trailers; wrong/missing labels and group leakage rejection;
+bounded local runtime smoke. No production/model-accuracy claim from those tests.
+
+Primary references consulted: RFC8701 (GREASE numeric extension values), RFC9113
+sections5/8 (streams and HEADERS), Go1.27.3 net/http Response.Body semantics,
+scikit-learn GroupKFold/common pitfalls (group separation and train-only fitting).
+https://www.rfc-editor.org/rfc/rfc8701.html
+https://www.rfc-editor.org/rfc/rfc9113.html
+https://pkg.go.dev/net/http#Response
+https://scikit-learn.org/stable/common_pitfalls.html
+https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupKFold.html
+
 ## Generator-attributed scenario export — 2026-11-06
 
 scripts/generate-traffic.cjs runs fixed-loopback, test-DB-only scenarios and
@@ -124,6 +181,64 @@ and unseen_probability in (0,1]. Fit it only after session splits.
 
 Remaining acceptance is listed in the latest verification above. M2-01/M2-02
 remain IN_PROGRESS until those checks are finished.
+
+## Fresh-machine gateway audit — 2026-11-05
+
+Scope: read-only readiness review of commit
+`277d9f5a4db3d7868ce21ca69a3cff03eaead7fc`, using `compose.team.yaml` on a
+new Windows checkout. Existing extraction code was not changed. The gateway
+works as raw telemetry, but the complete 12-feature training pipeline is not
+ready for bulk collection.
+
+Actual checks: `scripts/team.ps1 start` built and started all four services;
+PostgreSQL/backend/dashboard healthy, gateway reachable. Seven explicit Node
+requests plus Edge health and automatic favicon produced nine completion
+events: five HTTP/1.1, four HTTP/2.0, three TLS events and two H2 observations.
+Local gateway health bypassed upstream; backend health and five-course list
+returned 200; missing course returned 404; empty registration body returned 400.
+No registration or application-data writes were made. HTTP/1.1 and Node H2
+trusted only the generated lab certificate; Edge used its certificate SPKI in
+a separate temporary headless profile, without changing the system trust store.
+
+All seven explicit response request IDs matched exactly one completion; all
+completion events joined TLS by connection ID and H2 events where applicable.
+Generated IDs replaced a supplied request ID; supplied X-Forwarded-For did not
+become client identity. Edge H2 metadata produced Akamai
+`1:65536;2:0;4:6291456;6:262144|15663105|0|m,a,s,p`, MD5
+`52d84b11737d980aef856699f885ca86`, independently recomputed with Node crypto.
+Node H2 omitted the initial connection WINDOW_UPDATE and correctly yielded
+`akamai=null`, `akamai_reason=missing_window_update`. This is serializer/join
+verification, not an independent packet capture or proof for every client.
+Full Go gateway tests passed in Go 1.27.3 Linux container
+(`go test -count=1 -timeout 60s ./...`).
+
+| Training input | Current usable evidence / missing work |
+|---|---|
+| r_no_grease | GREASE is not a structured TLS field; JA4 removes GREASE. Add explicit capture evidence before calculating the ratio. |
+| rho_ja4 | JA4 and peer IP exist, but define window weighting and correct observed client topology. |
+| m_cross | User-Agent family and the compatibility rules are absent from structured events. |
+| s_mux | Requests have connection IDs and protocol; exact stream IDs/lifecycle are not recorded for the full connection. Define whether handled-request counts satisfy the intended formula. |
+| h_ip / r_ip | Current requests all share Docker peer `172.18.0.1`. Distinct generator contexts or spoofed headers do not demonstrate distinct clients. |
+| h_uri | Bounded route exists; define endpoint normalization, unknown routes and window calculation. |
+| h_query | Query information is deliberately absent; choose a privacy-preserving representation and formula before collection. |
+| r_static | No static-resource classification; unknown route alone cannot identify a static request. |
+| iat | Handler start timestamps exist; define per-client identity, ordering, first sample and window boundaries. |
+| l_markov | Route observations exist, but no normal-navigation model or likelihood computation is implemented. |
+| t_up | `latency_ms` measures the whole gateway handler/response, including downstream writes. Add a separately defined upstream timing measurement. |
+
+Collector prerequisites: immutable run/session identifier on all retained events,
+gateway-instance/restart disambiguation (connection IDs restart at 1), TLS/H2
+timestamps and capture quality, bounded retention/backpressure, explicit
+5-second window formulas and missing-value semantics, generator-side labels
+kept out of features, and session-based train/validation/test splits. Consume
+structured stdout once; legacy diagnostic H2 lines duplicate the same
+observation and must not be counted as separate captures.
+
+Local evidence: `.local-backups/setup-audit/smoke.json`, `gateway.log`,
+`verification.json`; smoke and log-validation scripts in the same ignored
+folder. The Docker dashboard is still a static preview: actual browser load
+showed “DỮ LIỆU MẪU” and “Trực tiếp (chưa có)”. No live adapter, dataset,
+model, autoscaler or traffic generator was added in this audit.
 
 ## UI-03c explanatory inventory — 2026-11-01
 

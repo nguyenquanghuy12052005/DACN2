@@ -37,10 +37,10 @@ test('export labels only attributed requests; missing IDs invalidate label and s
     const source=path.join(dir,'source');
     fs.mkdirSync(source);
     const start='2026-11-06T00:00:00.000Z',end='2026-11-06T00:00:05.000Z';
-    const event={event:'gateway_request',request_id:'owned',connection_id:1,
+    const event={schema_version:2,event:'gateway_request',request_id:'owned',connection_id:1,
       started_at:start,method:'GET',route:'/courses',client_ip:'127.0.0.1',protocol:'HTTP/2.0'};
     fs.writeFileSync(path.join(source,'events.jsonl'),[event,{...event,request_id:'foreign'}].map(JSON.stringify).join('\n'));
-    const result=await exportDataset(source,path.join(dir,'complete'),[{request_id:'owned'}],start,end,'Normal','generator1');
+    const result=await exportDataset(source,path.join(dir,'complete'),[{request_id:'owned',status:200,ground_truth:'legitimate',client_id:'human1',engine:'chrome'}],start,end,'Normal','generator1');
     assert.equal(result.window_label,'Normal');
     assert.equal(result.selected_request_count,1);
     assert.equal(fs.readFileSync(path.join(dir,'complete/events.jsonl'),'utf8').includes('foreign'),false);

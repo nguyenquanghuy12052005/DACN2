@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "72b67ea5-8735-4165-87bf-efd5559c5353",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "C:\\Users\\Administrator\\Documents\\ChatGPT\\TTTT\\DACN2\\.archify\\architecture-dacn2-20261105-193623\\candidate.json",
+  "output": "C:\\Users\\Administrator\\Documents\\ChatGPT\\TTTT\\DACN2\\.archify\\architecture-dacn2-20261105-193623\\dacn2.html",
+  "specification": {
+    "sha256": "74c72dc5f0a3284e6b58680bd4163f876fc51510dd9a300ae14a98eae9ce9add",
+    "bytes": 3954
+  },
+  "artifact": {
+    "sha256": "771b560ac245c0cf7d9753bcd221a3bd58aaa5e6ce0317b274e7c079e8d77cb3",
+    "bytes": 842155
+  }
+}

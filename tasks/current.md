@@ -1,5 +1,21 @@
 # Current milestone
 
+Training contract v2 (2026-11-08): telemetry/formulas, Chrome+Node source-IP
+diversity, four-class request ground truth, independent-group splitting,
+train-only Markov fitting and quality-gated CSV export implemented and tested.
+42 Node tests, Go tests/vet/Linux race, dashboard lint/build and six UI tests
+PASS. Successful local pilots currently provide five groups and 34 eligible
+windows with all 12 varying features. Dataset remains ready:false until at least
+25 independent groups and 2400 eligible windows pass the documented checks.
+No model trained; target-rate/generalization validation and protection/scaling
+integration remain open. README contains bounded smoke/full collection commands.
+See the latest v2 checkpoint in docs/PROGRESS.md; earlier entries are historical.
+
+Windows startup fix (2026-11-08): team-live.ps1 sends its port-check JavaScript
+on stdin instead of a Windows PowerShell native `node -e` argument. Regression
+reproduced the SyntaxError before the fix and passes for free/busy loopback
+ports afterward; prerequisites check PASS. See docs/PROGRESS.md.
+
 M2-03…05 generator pilot (2026-11-06): implemented four bounded Chrome scenarios
 in scripts/generate-traffic.cjs. Fixed loopback18444, active dacn2_test and explicit
 --traffic-lab required. At most4clients/20actionspersecond/300seconds, fixed

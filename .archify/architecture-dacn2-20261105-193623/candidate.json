@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DACN2 — Luồng Docker hiện có",
+    "locale": "vi",
+    "output": ".archify/architecture-dacn2-20261105-193623/dacn2.html",
+    "quality_profile": "showcase",
+    "repository": {"url": "https://github.com/nguyenquanghuy12052005/DACN2.git", "revision": "277d9f5a4db3d7868ce21ca69a3cff03eaead7fc"}
+  },
+  "components": [
+    {"id":"client","type":"external","label":"Client HTTPS","sublabel":"Browser / công cụ lab","pos":[40,40],"size":[200,70],"sources":[{"path":"README.md","line":27,"end_line":41}]},
+    {"id":"ingress","type":"security","label":"Go Gateway","sublabel":"TLS + HTTP/2 · :18445","pos":[415,40],"size":[210,70],"sources":[{"path":"compose.team.yaml","line":52,"end_line":64},{"path":"gateway/main.go","line":41,"end_line":123},{"path":"gateway/telemetry.go","line":128,"end_line":160}]},
+    {"id":"courses","type":"backend","label":"NestJS Backend","sublabel":"Môn học / đăng ký · :3000","pos":[805,40],"size":[210,70],"sources":[{"path":"backend/src/courses.controller.ts","line":21,"end_line":37},{"path":"backend/src/courses.service.ts","line":88,"end_line":132},{"path":"backend/src/database.service.ts","line":54,"end_line":74}]},
+    {"id":"storage","type":"database","label":"PostgreSQL 17","sublabel":"courses + registrations","pos":[805,275],"size":[210,70],"sources":[{"path":"compose.team.yaml","line":4,"end_line":17},{"path":"backend/src/courses.service.ts","line":104,"end_line":130}]},
+    {"id":"events","type":"messagebus","label":"Log JSON stdout","sublabel":"TLS · H2 · request","pos":[415,275],"size":[210,70],"sources":[{"path":"gateway/main.go","line":44,"end_line":52},{"path":"gateway/main.go","line":98,"end_line":120},{"path":"gateway/h2_live.go","line":15,"end_line":44}]},
+    {"id":"preview","type":"frontend","label":"Dashboard mẫu","sublabel":"React / Vite · :5173","pos":[40,275],"size":[200,70],"sources":[{"path":"dashboard/Dockerfile","line":8,"end_line":17},{"path":"README.md","line":30,"end_line":36}]}
+  ],
+  "connections": [
+    {"id":"client-ingress","from":"client","to":"ingress","label":"HTTPS H1/H2","variant":"emphasis"},
+    {"id":"ingress-courses","from":"ingress","to":"courses","label":"HTTP proxy","variant":"emphasis"},
+    {"id":"courses-storage","from":"courses","to":"storage","label":"SQL transaction"},
+    {"id":"ingress-events","from":"ingress","to":"events","label":"Ghi sự kiện"},
+    {"id":"client-preview","from":"client","to":"preview","label":"HTTP xem mẫu"}
+  ],
+  "cards": [
+    {"dot":"cyan","title":"1 · Đăng ký tín chỉ","items":["Client gọi GET /courses, GET /courses/:id hoặc POST /courses/:id/registrations qua Gateway.","Backend dùng transaction và khóa dòng để chống trùng, kiểm tra chỗ trống, rồi ghi PostgreSQL."]},
+    {"dot":"emerald","title":"2 · Dấu vết Gateway","items":["gateway_tls có JA4, JA4_r, JA4_o, JA4_ro. gateway_h2 có SETTINGS, WINDOW_UPDATE, PRIORITY và Akamai khi đủ quan sát.","gateway_request có request_id, connection_id, protocol, status, latency_ms và lỗi. Ghép connection_id trong cùng phiên chạy; ID kết nối có thể lặp sau restart.","HTTP/1.1 không có fingerprint H2. Capture thiếu giữ null và lý do; latency_ms là tổng thời gian tại Gateway."]},
+    {"dot":"amber","title":"3 · Phần cần nối tiếp","items":["Docker dashboard mới là preview mẫu, chưa đọc log và chưa đăng ký thật; vì vậy chưa có đường nối từ dashboard sang Gateway.","Collector 5 giây, dataset, AI, policy và autoscaling chưa được tích hợp trong Compose này. Chưa nên tạo tải hàng loạt để train đủ 12 feature.","Sơ đồ phản ánh mã nguồn và cấu hình tại commit đã ghim, không phải xác nhận triển khai thành công trên máy này. Giao diện điều khiển Archify dùng tiếng Anh."]}
+  ]
+}

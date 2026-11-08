@@ -28,10 +28,11 @@ type h2ObservationResult struct {
 }
 
 type h2ObservationManager struct {
-	slots     chan struct{}
-	nextID    atomic.Uint64
-	report    func(h2ObservationResult)
-	reportTLS func(tlsFingerprintEvent)
+	slots        chan struct{}
+	nextID       atomic.Uint64
+	report       func(h2ObservationResult)
+	reportTLS    func(tlsFingerprintEvent)
+	reportStream func(h2StreamEvent)
 }
 
 type tlsFingerprintEvent struct {
@@ -87,6 +88,7 @@ type observedTLSConn struct {
 	started, done bool
 	observer      *h2FrameObserver
 	timer         *time.Timer
+	streams       h2StreamCounter
 }
 
 // Explicit delegation documents the TLS handshake contract used by net/http.
@@ -177,6 +179,10 @@ func (c *observedTLSConn) Read(p []byte) (int, error) {
 	n, err := c.Conn.Read(p)
 	c.mu.Lock()
 	var result *h2ObservationResult
+	var streams []h2StreamEvent
+	if n > 0 && c.manager.reportStream != nil && c.ConnectionState().NegotiatedProtocol == "h2" {
+		streams = c.streams.feed(p[:n], time.Now(), c.id)
+	}
 	if c.observer != nil {
 		if n > 0 {
 			c.observer.feed(p[:n], time.Now())
@@ -188,6 +194,9 @@ func (c *observedTLSConn) Read(p []byte) (int, error) {
 		}
 	}
 	c.mu.Unlock()
+	for _, stream := range streams {
+		c.manager.reportStream(stream)
+	}
 	c.emit(result)
 	return n, err // Including reads returning data and an error together.
 }

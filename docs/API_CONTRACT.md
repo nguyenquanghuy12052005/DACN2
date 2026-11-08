@@ -1,5 +1,36 @@
 # Lab API contracts — backend and Gateway
 
+## Training telemetry v2 — 2026-11-08
+
+Additive Gateway request event schema_version=2 retains v1 fields for UI/history.
+`query_hash` is `none` for a captured empty query or a per-process HMAC-SHA256
+digest of the exact encoded query; oversized queries produce null. The random
+key is not logged. `query_group` remains legacy and is not a v2 entropy input.
+`upstream_response_ms` measures RoundTrip entry to observed body EOF; it is null
+for incomplete/error reads. `upstream_headers_ms` is retained as a different
+measurement. V2 CSV converts response timing and IAT to seconds.
+
+`gateway_h2_stream` schema_version=2 records connection_id, stream_id,
+started_at and status. HEADERS on a new increasing odd stream ID emits opened;
+trailers do not open streams. A constant-memory passive observer counts frame
+headers without retaining payloads; Go remains the validating protocol owner.
+Invalid/capacity states are explicit, with100k stream cap per connection. These
+are observed stream starts, not instantaneous active concurrency or proof that
+every stream completed a valid request. s_mux includes observed preflight streams
+on selected browser connections. Generator attribution excludes other connections.
+
+The opt-in test traffic boundary additionally permits only fixed `/lab/page`,
+`/lab/assets/app.css`, `/lab/assets/app.js`, `/lab/assets/icon.svg`, owned course
+detail reads and bounded course queries. Existing exact origin/token/method/body,
+concurrency and rate limits remain. Ordinary demo mode has no lab asset/query
+exception. Assets have gateway_local outcomes and do not fake backend timing.
+
+Dataset v2 has generator_ground_truth labels plus per-window role checks.
+Interrupted/error/unjoined runs cannot be labelled; Mixed requires both roles
+within the window. Source hashes bind events/ground truth and new profile files.
+Training preparation derives source-group splits before fitting a Normal-only
+Markov reference. Training X never contains IDs, labels, engine or ground truth.
+
 ## UI-03c additive dashboard contract — 2026-11-01
 
 The local dashboard runner defaults to persistent `dacn2`; it reuses existing

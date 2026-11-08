@@ -53,6 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatal("request ID initialization failed")
 	}
+	telemetry.labContent = browserConfig != nil && browserConfig.trafficLab
 
 	server := &http.Server{
 		Addr:              config.listen,
@@ -117,6 +118,12 @@ func main() {
 			requestLog.Print(string(encoded))
 		} else {
 			log.Print("TLS event encoding failed")
+		}
+	}
+	manager.reportStream = func(event h2StreamEvent) {
+		encoded, err := json.Marshal(event)
+		if err == nil {
+			requestLog.Print(string(encoded))
 		}
 	}
 	log.Printf("Gateway listening on https://%s -> %s", server.Addr, target)

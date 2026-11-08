@@ -96,12 +96,13 @@ async function main() {
     assert.equal(new Set(streamIds).size,10);
     assert.equal(new Set(h2requests.map(e=>e.connection_id)).size,1);
     assert.equal(new Set(requests.map(e=>e.client_ip)).size,2);
-    const features=summarize(requests,new Map(events.filter(e=>e.event==='gateway_tls').map(e=>[e.connection_id,e])));
+    const features=summarize(requests,new Map(events.filter(e=>e.event==='gateway_tls').map(e=>[e.connection_id,e])),
+      new Map(),null,new Map(),null,{streams:events.filter(e=>e.event==='gateway_h2_stream')});
     assert.equal(features.values.s_mux,10);
     assert.equal(features.values.r_static,1/12);
     assert.ok(features.values.h_query>0);
     assert.ok(features.values.h_ip>0);
-    assert.ok(features.values.t_up>=20);
+    assert.ok(features.values.t_up>=.02);
     fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({pass:true,session:id,requests:12,h2:10,streamIds,values:features.values,manifest},null,2));
     console.log(JSON.stringify({pass:true,out,requests:12,h2:10,streams:streamIds.length}));
   } finally {

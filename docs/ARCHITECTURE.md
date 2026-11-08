@@ -1,5 +1,29 @@
 # Architecture and decisions
 
+## Report-aligned training capture v2 — 2026-11-08
+
+User requested faithful12feature inputs, labels and protection against bad training
+data. Keep the application/backend architecture and existing data. Extend passive
+Gateway measurement instead of manufacturing values or changing the report's
+hypothesized ranges into assertions. Use a fresh schema/units for new sessions;
+historical v1 replays remain supported explicitly, never mixed into training v2.
+
+Source-IP diversity uses strictly fixed-target loopback CONNECT tunnels for Chrome
+and localAddress binding for Node. Browser TLS remains end-to-end to the Gateway;
+no Docker socket, forwarding-header identity, public listener, external target or
+TLS trust-store change is introduced. Helpers close their own sockets/browsers.
+The constrained runner still caps4clients/20actions/s/300s. This supports lab
+behavioral variation, not report-scale150–450RPS or distributed-Internet claims.
+
+Window labels derive from joined generator request roles. Calibration of known
+client stacks precedes scenario T0 and never learns expected families from attack
+UA strings. Freeze reference profiles with each dataset. Fit Markov on Normal
+training groups only after grouping by source Gateway session; fixed holdout
+exports are separate from future per-fold preprocessing. Unknown capture stays
+missing. A quality gate withholds X/y exports until corpus coverage, labels,
+diversity and completeness pass. This is eligibility for controlled-lab model
+prototyping, not a guarantee of F1/FPR, security or generalization.
+
 ## Bounded scenario generator decision — 2026-11-06
 
 Use the existing direct-browser Live lab as the single generator target. One

@@ -3,7 +3,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const {FEATURES,summarize,replay,createCollector} = require('../lib/feature-window.cjs');
+const {FEATURES,summarize: summarizeCurrent,replay,createCollector} = require('../lib/feature-window.cjs');
+// Historical v1 formulas remain reproducible; v2 contracts have separate tests.
+const summarize = (a,b,c,d,e,f) => summarizeCurrent(a,b,c,d,e,f,{version:1});
 const start = Date.parse('2026-11-06T00:00:00Z');
 function request(id,ms,ip='192.0.2.1',route='/courses') {
   return {event:'gateway_request',request_id:id,started_at:new Date(start+ms).toISOString(),client_ip:ip,route,method:'GET',connection_id:1,protocol:'HTTP/2.0',query_group:'none',is_static:false,upstream_headers_ms:10};

@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"io"
@@ -27,29 +29,31 @@ const (
 )
 
 type gatewayRequestEvent struct {
-	UserAgentFamily   string    `json:"ua_family"`
-	UpstreamHeadersMS *float64  `json:"upstream_headers_ms"`
-	QueryGroup        string    `json:"query_group"`
-	IsStatic          bool      `json:"is_static"`
-	SchemaVersion     int       `json:"schema_version"`
-	Event             string    `json:"event"`
-	RequestID         string    `json:"request_id"`
-	ConnectionID      *uint64   `json:"connection_id"`
-	StartedAt         time.Time `json:"started_at"`
-	CompletedAt       time.Time `json:"completed_at"`
-	LatencyMS         float64   `json:"latency_ms"`
-	ClientIP          *string   `json:"client_ip"`
-	ClientIPSource    string    `json:"client_ip_source"`
-	Method            string    `json:"method"`
-	Protocol          string    `json:"protocol"`
-	Route             string    `json:"route"`
-	RouteKind         string    `json:"route_kind"`
-	UpstreamAttempted bool      `json:"upstream_attempted"`
-	UpstreamStatus    *int      `json:"upstream_status"`
-	StatusCode        *int      `json:"status_code"`
-	ResponseBytes     int64     `json:"response_bytes"`
-	Outcome           string    `json:"outcome"`
-	ErrorCode         *string   `json:"error_code"`
+	UserAgentFamily    string    `json:"ua_family"`
+	UpstreamHeadersMS  *float64  `json:"upstream_headers_ms"`
+	UpstreamResponseMS *float64  `json:"upstream_response_ms"`
+	QueryHash          *string   `json:"query_hash"`
+	QueryGroup         string    `json:"query_group"`
+	IsStatic           bool      `json:"is_static"`
+	SchemaVersion      int       `json:"schema_version"`
+	Event              string    `json:"event"`
+	RequestID          string    `json:"request_id"`
+	ConnectionID       *uint64   `json:"connection_id"`
+	StartedAt          time.Time `json:"started_at"`
+	CompletedAt        time.Time `json:"completed_at"`
+	LatencyMS          float64   `json:"latency_ms"`
+	ClientIP           *string   `json:"client_ip"`
+	ClientIPSource     string    `json:"client_ip_source"`
+	Method             string    `json:"method"`
+	Protocol           string    `json:"protocol"`
+	Route              string    `json:"route"`
+	RouteKind          string    `json:"route_kind"`
+	UpstreamAttempted  bool      `json:"upstream_attempted"`
+	UpstreamStatus     *int      `json:"upstream_status"`
+	StatusCode         *int      `json:"status_code"`
+	ResponseBytes      int64     `json:"response_bytes"`
+	Outcome            string    `json:"outcome"`
+	ErrorCode          *string   `json:"error_code"`
 }
 
 type gatewayRequestState struct {
@@ -57,10 +61,12 @@ type gatewayRequestState struct {
 	event gatewayRequestEvent
 }
 type gatewayTelemetry struct {
-	prefix string
-	next   atomic.Uint64
-	proxy  *httputil.ReverseProxy
-	report func(gatewayRequestEvent)
+	prefix     string
+	next       atomic.Uint64
+	proxy      *httputil.ReverseProxy
+	report     func(gatewayRequestEvent)
+	queryKey   [32]byte
+	labContent bool
 }
 
 func gatewayConnContext(ctx context.Context, c net.Conn) context.Context {
@@ -82,6 +88,12 @@ func peerIP(remote string) *string {
 func requestRoute(path string) string {
 	switch path {
 	case "/gateway/health", "/health", "/courses":
+		return path
+	}
+	if path == "/lab/page" {
+		return path
+	}
+	if _, ok := labAssets[path]; ok {
 		return path
 	}
 	parts := strings.Split(path, "/")
@@ -122,6 +134,9 @@ func (t telemetryTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		elapsed := time.Since(upstreamStart).Seconds() * 1000
 		s.event.UpstreamHeadersMS = &elapsed
 		s.mu.Unlock()
+		if response.Body != nil {
+			response.Body = &observedUpstreamBody{ReadCloser: response.Body, state: s, start: upstreamStart}
+		}
 	}
 	return response, err
 }
@@ -136,6 +151,9 @@ func newGatewayTelemetryWithEntropy(target *url.URL, base http.RoundTripper, rep
 		return nil, err
 	}
 	g := &gatewayTelemetry{prefix: hex.EncodeToString(nonce[:]), report: report}
+	if _, err := rand.Read(g.queryKey[:]); err != nil {
+		return nil, err
+	}
 	g.proxy = &httputil.ReverseProxy{
 		Transport: telemetryTransport{base},
 		// Proxy copy errors can contain attacker-controlled text; the completion
@@ -192,6 +210,14 @@ func (g *gatewayTelemetry) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	g.observe(http.HandlerFunc(g.route)).ServeHTTP(w, r)
 }
 func (g *gatewayTelemetry) route(w http.ResponseWriter, r *http.Request) {
+	if g.labContent && r.Method == "GET" {
+		if asset, ok := labAssets[r.URL.Path]; ok {
+			w.Header().Set("Content-Type", asset.kind)
+			w.Header().Set("Cache-Control", "no-store")
+			_, _ = io.WriteString(w, asset.body)
+			return
+		}
+	}
 	if r.URL.Path != "/gateway/health" {
 		g.proxy.ServeHTTP(w, r)
 		return
@@ -214,7 +240,7 @@ func (g *gatewayTelemetry) observe(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		id := g.prefix + "-" + strconv.FormatUint(g.next.Add(1), 10)
-		e := gatewayRequestEvent{SchemaVersion: 1, Event: "gateway_request", RequestID: id, StartedAt: start.UTC(), ClientIP: peerIP(r.RemoteAddr), ClientIPSource: "unavailable", Method: requestMethod(r.Method), Route: requestRoute(r.URL.Path), RouteKind: "upstream", Outcome: "upstream_response"}
+		e := gatewayRequestEvent{SchemaVersion: 2, Event: "gateway_request", RequestID: id, StartedAt: start.UTC(), ClientIP: peerIP(r.RemoteAddr), ClientIPSource: "unavailable", Method: requestMethod(r.Method), Route: requestRoute(r.URL.Path), RouteKind: "upstream", Outcome: "upstream_response"}
 		if r.Proto == "HTTP/1.1" || r.Proto == "HTTP/1.0" || r.Proto == "HTTP/2.0" {
 			e.Protocol = r.Proto
 		} else {
@@ -230,9 +256,22 @@ func (g *gatewayTelemetry) observe(next http.Handler) http.Handler {
 			e.RouteKind = "gateway_local"
 			e.Outcome = "gateway_local"
 		}
+		if _, ok := labAssets[r.URL.Path]; ok && g.labContent {
+			e.RouteKind = "gateway_local"
+			e.Outcome = "gateway_local"
+		}
 		s := &gatewayRequestState{event: e}
 		s.event.UserAgentFamily = userAgentFamily(r.UserAgent())
 		s.event.QueryGroup = "none"
+		if len(r.URL.RawQuery) <= 2048 {
+			value := "none"
+			if r.URL.RawQuery != "" {
+				mac := hmac.New(sha256.New, g.queryKey[:])
+				_, _ = mac.Write([]byte(r.URL.RawQuery))
+				value = hex.EncodeToString(mac.Sum(nil))
+			}
+			s.event.QueryHash = &value
+		}
 		if r.URL.RawQuery != "" {
 			s.event.QueryGroup = "present"
 		}

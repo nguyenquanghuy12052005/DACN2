@@ -80,13 +80,15 @@ func browserLabHandler(next http.Handler, cfg *browserLabConfig) http.Handler {
 			return
 		}
 		parts := strings.Split(path, "/")
-		courseRead := path == "/courses"
+		courseRead := path == "/courses" || (len(parts) == 3 && parts[1] == "courses" && cfg.ids[parts[2]])
+		_, labResource := labAssets[path]
+		labResource = cfg.trafficLab && labResource
 		registration := len(parts) == 4 && parts[0] == "" && parts[1] == "courses" && cfg.ids[parts[2]] && parts[3] == "registrations"
-		if !courseRead && !registration {
+		if !courseRead && !registration && !labResource {
 			deny(404, "LAB_ROUTE_REFUSED")
 			return
 		}
-		if r.URL.RawQuery != "" || origin != cfg.origin {
+		if (r.URL.RawQuery != "" && (!cfg.trafficLab || !courseRead || len(r.URL.RawQuery) > 2048)) || origin != cfg.origin {
 			deny(403, "LAB_ORIGIN_REQUIRED")
 			return
 		}

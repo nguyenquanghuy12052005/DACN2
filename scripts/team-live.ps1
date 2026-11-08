@@ -63,8 +63,27 @@ Write-Output 'Prerequisites OK: Node/npm, Go, Chrome, Docker Linux engine and Co
 if ($CheckOnly) { exit 0 }
 
 # Refuse occupied UI ports; do not stop unrelated processes/containers.
-& node -e 'const net=require("node:net");(async()=>{for(const port of [5173,13001,18444])await new Promise((ok,no)=>{const s=net.createServer();s.once("error",no);s.listen(port,"127.0.0.1",()=>s.close(ok));});})().catch(()=>{console.error("Live ports busy. Stop the Docker dashboard with scripts/team.ps1 stop, or stop the existing native lab first.");process.exitCode=1;});'
-if ($LASTEXITCODE -ne 0) { throw 'Live ports are occupied.' }
+# Send source on stdin: Windows PowerShell 5.1 strips quotes in native -e arguments.
+$portCheck = @'
+const net = require('node:net');
+(async () => {
+    for (const port of [5173,13001,18444]) {
+        await new Promise((resolve, reject) => {
+            const server = net.createServer();
+            server.once('error', reject);
+            server.listen(port, '127.0.0.1', () => server.close(resolve));
+        });
+    }
+})().catch(error => {
+    console.error('Live port preflight failed:', error.message);
+    if (error.code === 'EADDRINUSE') {
+        console.error('Stop the Docker dashboard with scripts/team.ps1 stop, or stop the existing native lab first.');
+    }
+    process.exitCode = 1;
+});
+'@
+$portCheck | & node
+if ($LASTEXITCODE -ne 0) { throw 'Live port preflight failed; inspect the error above.' }
 
 foreach ($folder in @('backend', 'dashboard')) {
     # Reinstall from the lockfile on every launch, including after git pull.

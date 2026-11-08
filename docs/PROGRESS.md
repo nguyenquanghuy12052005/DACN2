@@ -1,5 +1,53 @@
 # DACN2 — checkpoint tiếp tục dự án
 
+## Training telemetry v2 — 2026-11-08
+
+Implemented request-weighted GREASE, exact-query keyed hashes, raw HTTP/2
+stream-start counting, per-IP rates/sequences, seconds-based IAT and full-body
+upstream response timing. Missing observations remain missing. Stream starts
+are not instantaneous concurrent streams; response timing includes body reads.
+Controlled pre-scenario Chrome/Node calibration supplies bounded UA/H2 profiles.
+
+The bounded generator now mixes real Chrome and Node transports across all four
+classes, uses genuine loopback source-IP aliases through restricted CONNECT
+tunnels, records request ground truth, and includes static/query/browsing flows.
+New collect-dataset.cjs and prepare-training.cjs preserve raw audit files, verify
+joins/hashes/provenance, split by independent Gateway group, fit Markov only on
+Normal training groups, and gate training CSV exports. No missing-value filling,
+forced report ranges, model fitting, dependency upgrades or main DB writes.
+
+Validation: 42 Node tests, Go tests/vet, Linux Docker Go race tests, dashboard
+lint/build and six UI tests passed. Real feature lab passed with 12 requests,
+10 observed H2 streams and two actual peer IPs. Three-group and final one-group
+batches completed all four scenarios with fixture cleanup. Final receipt:
+`.local-backups/traffic-batches/batch-34d5266e-6fb6-464a-91bd-0e9f6273b46e/result.json`.
+Across retained successful pilots: five independent groups, 34 eligible windows,
+all 12 features numeric and varying, and >=50% Chrome legitimate traffic in
+applicable classes. Gate remains ready:false: requires >=25 groups and >=2400
+eligible five-second windows. Training X/y files are deliberately withheld.
+This establishes controlled-lab implementation evidence, not target-rate attack
+validation, Internet diversity, model quality, inference or K3s integration.
+Earlier checkpoints below are historical and may describe superseded gaps.
+
+## Windows PowerShell Live preflight fix — 2026-11-08
+
+User startup failed before any real port check: Windows PowerShell 5.1 stripped
+JavaScript quotes from the native `node -e` argument, producing SyntaxError and
+a misleading occupied-port exception. `scripts/team-live.ps1` now pipes an ASCII
+here-string into Node stdin, preserving source bytes. Real listen failures retain
+their original message; only EADDRINUSE suggests stopping a conflicting service.
+No dependency versions, database data or application behavior changed by this fix.
+
+Regression `node --test scripts/tests/team-live-preflight.test.cjs` reproduces the
+original SyntaxError (RED), then verifies the real preflight block under
+`powershell.exe` with an occupied and a free ephemeral loopback port (GREEN).
+`team-live.ps1 -CheckOnly` PASS after refreshing the invoking process PATH;
+`git diff --check` PASS. Full `team-live.ps1` startup then PASS: lockfile installs,
+team setup, PostgreSQL startup and native builds completed; runner reported Live
+ready on5173 with Gateway18444/backend13001 and opened its isolated Chrome lab.
+No registration was submitted for this startup fix. Live left running for the user;
+stop with `node scripts/dashboard-live.cjs stop --team-db` (DB data retained).
+
 ## CSV tổng theo yêu cầu người dùng — 2026-11-06
 
 Gộp4lượt người dùng thành .local-backups/traffic/training_total.csv:

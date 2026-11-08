@@ -34,6 +34,8 @@ func userAgentFamily(value string) string {
 		return "unknown"
 	}
 	switch {
+	case strings.HasPrefix(value, "DACN2-Node/"):
+		return "node"
 	case strings.Contains(value, "Firefox/"):
 		return "firefox"
 	case strings.Contains(value, "Chrome/"), strings.Contains(value, "Chromium/"):

@@ -105,12 +105,12 @@ func TestTelemetryIdentityAndPrivacy(t *testing.T) {
 	if strings.Contains(string(encoded), "PRIVATE") || e.Route != "/courses/:id/registrations" || e.RequestID != upstreamID || e.RequestID != w.Header().Get("X-Request-ID") || len(e.RequestID) > 64 || e.ConnectionID == nil || *e.ConnectionID != 7 {
 		t.Fatalf("unsafe/mismatched event: %s", encoded)
 	}
-	if e.LatencyMS < 0 || e.CompletedAt.Before(e.StartedAt) || e.CompletedAt.Location() != time.UTC || e.SchemaVersion != 1 || e.ResponseBytes != 2 {
+	if e.LatencyMS < 0 || e.CompletedAt.Before(e.StartedAt) || e.CompletedAt.Location() != time.UTC || e.SchemaVersion != 2 || e.ResponseBytes != 2 {
 		t.Fatalf("bad timing/schema/bytes: %+v", e)
 	}
 	var fields map[string]any
 	_ = json.Unmarshal(encoded, &fields)
-	if len(fields) != 23 || fields["protocol"] != "HTTP/1.1" {
+	if len(fields) != 25 || fields["protocol"] != "HTTP/1.1" {
 		t.Fatalf("schema has %d fields", len(fields))
 	}
 	if e.QueryGroup != "present" || e.IsStatic || e.UpstreamHeadersMS == nil || *e.UpstreamHeadersMS < 0 {
