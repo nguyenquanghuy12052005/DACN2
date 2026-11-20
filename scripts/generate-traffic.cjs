@@ -5,7 +5,7 @@ const path = require('node:path');
 const { randomUUID, createHash } = require('node:crypto');
 const { setTimeout: delay } = require('node:timers/promises');
 const { performance } = require('node:perf_hooks');
-const { parseOptions, validateSession, seededRandom } = require('./lib/traffic-plan.cjs');
+const { parseOptions, validateSession, seededRandom, clientPlans, nextAction, nextDelay, GENERATOR_VERSION } = require('./lib/traffic-plan.cjs');
 const { replay, VERSION } = require('./lib/feature-window.cjs');
 const {labelFor}=require('./lib/training-data.cjs');
 const {sourceProxy,nodeClient}=require('./lib/traffic-clients.cjs');
@@ -67,6 +67,7 @@ async function exportDataset(source, destination, records, startedAt, endedAt, s
   }
   writeJSON(path.join(destination, 'manifest.json'), {
     schema_version: VERSION,
+    generator_version: context.generator_version ?? 'traffic-behavior.v2',
     session_id: sessionId,
     source_gateway_session_id: path.basename(path.dirname(source)),
     split_group_id: path.basename(path.dirname(source)),
@@ -110,7 +111,7 @@ async function main() {
   let browser, profiles, state = 'starting', failure = null;
   let startedAt, endedAt, skipped = 0;
   const manifest = {
-    id, options, source_gateway_session_id: liveLock.sessionId,
+    id, options, generator_version: GENERATOR_VERSION, source_gateway_session_id: liveLock.sessionId,
     split_group_id: liveLock.sessionId,
     purpose: 'bounded_scenario_pilot', engine: options.engine,
     limitations: ['source aliases are real loopback endpoints, not distributed Internet users',
@@ -130,13 +131,14 @@ async function main() {
     if(settings.gateway!==gateway||!/^[a-f0-9]{64}$/.test(settings.token??''))throw Error('Invalid local configuration');
     const ca=fs.readFileSync(path.join(liveDirectory,'tls/cert.pem'));
     const calibration=[];
-    for (const role of ['human', 'bot']) {
-      for (let index = 0; index < options[role]; index++) {
+    const plans = clientPlans(options);
+    manifest.client_profiles = plans;
+    for (const plan of plans) {
         const ids = (settings.ids || '').split(',');
         if (!ids.length || ids.some(value => !/^[1-9][0-9]*$/.test(value))) throw Error('Invalid fixture IDs');
-        const engine=options.engine==='mixed'?(index%2?'node':'chrome'):options.engine;
+        const {engine} = plan;
         const localAddress='127.0.0.'+(10+(options.seed*4+clients.length)%128);
-        const client={role,id:role+'-'+index,engine,settings,course:ids[index%Math.min(2,ids.length)],busy:false,next:0,actions:0};
+        const client={...plan,settings,courseIds:ids,busy:false,next:0,actions:0};
         clients.push(client);
         if(engine==='node') {
           const transport=await nodeClient({localAddress,ca,token:settings.token});
@@ -158,7 +160,6 @@ async function main() {
         // Send the first HEADERS promptly: the bounded fingerprint observer has
         // a 2-second deadline and must not wait for other browsers to start.
         calibration.push({client,result:await client.send('/courses')});
-      }
     }
     // Calibrate known installed client stacks BEFORE the scenario starts. Expected
     // families come from the controlled transport, never from an attack's UA.
@@ -199,18 +200,12 @@ async function main() {
     async function act(client) {
       client.busy = true;
       const action = client.actions++;
-      // Vary cached/API visits and asset-fetching crawlers across seeds so a
-      // single static-resource pattern does not uniquely determine the label.
-      const fullFlow=['/lab/page','/lab/assets/app.css','/lab/assets/app.js','/lab/assets/icon.svg','/courses','/courses/'+client.course,'/courses/'+client.course+'/registrations'];
-      const flow=options.seed%3===1?['/courses','/courses/'+client.course,fullFlow.at(-1)]:fullFlow;
-      const registration = client.role === 'human' && action % flow.length === flow.length-1;
-      const route = client.role==='human'?flow[action%flow.length]+(action%flow.length===4?'?view=list':''):
-        (options.seed%3===0?fullFlow[action%(fullFlow.length-1)]:action%8===7?'/lab/page':'/courses?nonce='+Math.floor(rng()*1000000));
+      const {route, registration, spoof} = nextAction(client, client.courseIds, rng);
       const started = new Date().toISOString();
       let result;
       try {
         result = await client.send(route,registration?{studentCode:'G_'+id.slice(-8)+'_'+client.id+'_'+action}:undefined,
-          client.role==='bot'&&action%3===0);
+          spoof);
       } catch {
         result = { status: null, request_id: null, error: 'request_failed_or_timeout' };
       }
@@ -222,9 +217,9 @@ async function main() {
       records.push(record);
       fs.appendFileSync(path.join(out, 'ground-truth.jsonl'), JSON.stringify(record) + '\n');
       client.busy = false;
-      client.next = performance.now() + (client.role === 'human' ? (client.engine==='chrome'?500:800) + Math.floor(rng() * 1000) : 0);
+      client.next = performance.now() + nextDelay(client, rng);
     }
-    // One fixed dispatch interval bounds offered rate. No catch-up bursts or unbounded queue.
+    // Jittered dispatch spacing stays >=50ms, with no catch-up queue.
     while (!interrupted && performance.now() < deadline) {
       const tick = performance.now();
       let client;
@@ -245,7 +240,8 @@ async function main() {
           interrupted = true;
         });
       } else skipped++;
-      await delay(Math.ceil(Math.max(1, 1000 / options.rps - (performance.now() - tick))));
+      const interval = Math.max(50, 1000 / options.rps * (.5 + rng()));
+      await delay(Math.ceil(Math.max(1, interval - (performance.now() - tick))));
     }
     await Promise.all(inFlight);
     endedAt = new Date().toISOString();
@@ -264,7 +260,7 @@ async function main() {
       await delay(300);
       try {
         dataset = await exportDataset(path.join(liveDirectory, 'dataset'), path.join(out, 'dataset'),
-          records, startedAt, endedAt, options.scenario, id,{state,profiles});
+          records, startedAt, endedAt, options.scenario, id,{state,profiles,generator_version:GENERATOR_VERSION});
         if (dataset.data_quality !== 'joined') {
           state = 'failed';
           failure = 'Incomplete request attribution; inspect ground-truth.jsonl and source logs';

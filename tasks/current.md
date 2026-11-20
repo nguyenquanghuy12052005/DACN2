@@ -1,5 +1,15 @@
 # Current milestone
 
+Generator shortcut correction (2026-11-20): supplied3567-row ZIP audited;
+depth3 tree independently reproduces100% holdout scores. X/y and Gateway group
+separation pass, but per-class client count/pacing/UA workflows are stereotyped.
+Generator v3 varies real bounded traffic profiles with overlap; batch order is
+shuffled. Preparation adds distribution/duplicate/constant/provenance diagnostics;
+audit-training.py examines a prepared directory or ZIP. 45Node/2Python tests PASS.
+Original notebook is missing. Fresh corpus and independent holdout evaluation
+remain required before interpreting model quality. Old ready:true is a corpus
+coverage gate, not proof against shortcuts. See docs/PROGRESS.md and README.
+
 Training contract v2 (2026-11-08): telemetry/formulas, Chrome+Node source-IP
 diversity, four-class request ground truth, independent-group splitting,
 train-only Markov fitting and quality-gated CSV export implemented and tested.

@@ -1,5 +1,59 @@
 # DACN2 — checkpoint tiếp tục dự án
 
+## Generator shortcut audit — 2026-11-20
+
+User supplied batch-4d77f51e-440f-4afb-b989-c89b0d813789 ZIP from a teammate.
+Actual corpus: 3567 rows, 29 Gateway groups; train2272/19groups,
+validation583/5groups, test712/5groups. All X files contain only the 12 numeric
+features. No exact duplicate vector, session ID or Gateway group crosses splits.
+Markov reference groups are entirely in train. Original training notebook is
+absent, so its fitting/preprocessing procedure cannot be certified.
+
+Independent sklearn depth3/minleaf5 tree fitted on train reproduces accuracy
+and macro-F1=1 on both holdouts using h_ip, r_ip and l_markov. rho_ja4 is exactly
+1 for every Normal row and .5 in the other three classes; m_cross is exactly0
+in Normal/Flash and positive in DDoS/Mixed. A separate20-run shuffled-train-label
+check averaged test accuracy .27851. Exact-vector uniqueness and group splitting
+therefore did not prevent highly stereotyped workloads. Old ready:true checked
+minimum coverage/provenance/variation, and missed these shortcuts.
+
+Generator traffic-behavior.v3 changes the traffic itself: all classes sample
+3–4 actual peer clients, Normal offered rate2–10 and other classes4–12 overlap,
+both engines appear in each class, shared route/query/static/registration/Node-UA
+profiles vary by seed, and both roles have nonzero pauses and burst variation.
+One Node transport per population keeps its count independent of class.
+Dispatch jitter preserves >=50ms spacing, max4clients/max300s limits, origin/
+token restrictions and test-DB-only fixtures. Batch scenario order is shuffled
+per Gateway group. Labels remain controlled scenario/role intent, not proof of
+real attack saturation. No feature noise or retrospective CSV/label editing.
+
+prepare-training now writes dataset-diagnostics.json with per-class ranges,
+class-dependent constants, duplicate vectors and generator versions. Warnings
+are descriptive rather than automatic rejection of genuine easy separation.
+Existing v2 data remains readable and is identified separately by provenance.
+New audit-training.py accepts a prepared training directory or batch ZIP,
+checks X/y/group alignment/schema/overlap/Markov groups and optionally runs
+train-only shallow/single-feature trees and shuffled-label baseline using
+installed numpy/sklearn. It never refits on holdouts or overwrites reports.
+Reproducible audit and original20-run evidence are local under
+`.local-backups/dataset-audit-20261120/`.
+
+45 Node tests and2 Python regression tests PASS, including overlapping scenario
+profiles, both-role endpoint/UA use, variable pauses, mixed-version diagnostics,
+ZIP/directory equivalence, label-in-X and row-misalignment refusal, and unchanged
+fitted tree rules when only holdout labels change. Initial20s/scenario smoke
+completed454requests/zero unjoined and cleaned fixtures, receipt
+`.local-backups/traffic-batches/batch-75712e07-23e3-4007-9593-03f45bcd960d/result.json`.
+Final-code10s/scenario smoke also completed169requests (Flash23, DDoS55,
+Mixed48, Normal43), zero request errors/unjoined, cleanup:true, no remaining
+Live/generator locks or app listeners. Receipt:
+`.local-backups/traffic-batches/batch-ef634b9e-76b2-4934-a0a7-466d15bbe431/result.json`.
+Both short batches intentionally return exit1 for insufficient local corpus,
+with state:completed/error:null. Docker PostgreSQL started only for these checks
+is stopped afterward. New independent
+corpus collection and new holdout model evaluation remain pending; no model
+quality improvement or real-world generalization is claimed. Changes are local.
+
 ## Training telemetry v2 — 2026-11-08
 
 Implemented request-weighted GREASE, exact-query keyed hashes, raw HTTP/2

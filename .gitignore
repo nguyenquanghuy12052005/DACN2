@@ -25,6 +25,7 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
+__pycache__/
 *.exe
 *.test
 /gateway/gateway

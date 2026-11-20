@@ -5,7 +5,8 @@ const net=require('node:net');
 const {spawn}=require('node:child_process');
 const {randomUUID}=require('node:crypto');
 const {setTimeout:delay}=require('node:timers/promises');
-const {CLASSES,prepareTraining}=require('./lib/training-data.cjs');
+const {prepareTraining}=require('./lib/training-data.cjs');
+const {scenarioOrder}=require('./lib/traffic-plan.cjs');
 const root=path.resolve(__dirname,'..');
 function parse(args) {
   const options={};
@@ -92,8 +93,9 @@ async function main() {
       }
       if(!own)throw Error('Owned test Live did not become ready; inspect batch log');
       report.sessions.push(own.sessionId);save();
-      for(let index=0;index<CLASSES.length&&!stopped;index++) {
-        generator=launch(['scripts/generate-traffic.cjs',CLASSES[index],`--seconds=${options.seconds}`,`--seed=${options.seed+round*4+index}`,'--engine=mixed'],`generator-${round}-${index}.log`);
+      const order=scenarioOrder(options.seed+round);
+      for(let index=0;index<order.length&&!stopped;index++) {
+        generator=launch(['scripts/generate-traffic.cjs',order[index],`--seconds=${options.seconds}`,`--seed=${options.seed+round*4+index}`,'--engine=mixed'],`generator-${round}-${index}.log`);
         const timeout=Date.now()+(options.seconds+60)*1000;
         while(!generator.ended()) {
           if(stopped)requestStop(path.join(root,'.local-backups/traffic/session.lock'),generator.child.pid,'generator');

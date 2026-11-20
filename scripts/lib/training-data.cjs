@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {createHash} = require('node:crypto');
 const {FEATURES,VERSION,replay} = require('./feature-window.cjs');
+const {diagnose} = require('./dataset-diagnostics.cjs');
 const CLASSES = ['Normal','Flash_Crowd','Pure_L7_DDoS','Mixed_Traffic'];
 const hash = data => createHash('sha256').update(data).digest('hex');
 const readJSON = file => JSON.parse(fs.readFileSync(file,'utf8'));
@@ -175,7 +176,10 @@ async function prepareTraining(input, output) {
     source_event_hashes:Object.fromEntries(sessions.map(s=>[s.manifest.session_id,s.manifest.events_sha256])),
     splits:Object.fromEntries(split),input_sessions:sessions.length,
     considered_windows:considered,rejected_windows:rejectedWindows,missing_feature_counts:missingFeatures};
-  report.warnings=rejected.length?['Rejected source sessions are excluded; inspect rejected_sources and retain their audit files.']:[];
+  const diagnostics=diagnose(rows,sessions,split);
+  fs.writeFileSync(path.join(output,'dataset-diagnostics.json'),JSON.stringify(diagnostics,null,2));
+  report.ready_scope='Coverage, provenance and minimum corpus size; inspect dataset-diagnostics.json before training';
+  report.warnings=[...(rejected.length?['Rejected source sessions are excluded; inspect rejected_sources and retain their audit files.']:[]),...diagnostics.warnings];
   fs.writeFileSync(path.join(output,'quality-report.json'),JSON.stringify(report,null,2));
   fs.writeFileSync(path.join(output,'schema.json'),JSON.stringify({schema_version:VERSION,
     feature_order:FEATURES,label_map:Object.fromEntries(CLASSES.map((name,id)=>[id,name])),units:report.units,

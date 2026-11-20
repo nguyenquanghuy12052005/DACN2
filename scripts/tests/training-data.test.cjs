@@ -50,6 +50,7 @@ test('preparation refuses old unlabelled files and never emits training X on fai
     assert.equal(report.ready,false);assert.match(report.rejected_sources[0].reason,/v1/);
     assert.ok(!fs.existsSync(path.join(output,'train-X.csv')));
     assert.ok(fs.existsSync(path.join(output,'quality-report.json')));
+    assert.ok(fs.existsSync(path.join(output,'dataset-diagnostics.json')));
   } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
 test('readiness accepts a fully covered policy fixture but rejects constant features or inadequate browser coverage',()=>{

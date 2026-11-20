@@ -1,5 +1,45 @@
 # DACN2 — L7 cyber-defense lab
 
+## Kiểm tra điểm 100% và generator v3 — 2026-11-20
+
+Audit bộ batch do nhóm cung cấp có 3567 dòng (2272 train, 583 validation,
+712 test), 29 nhóm Gateway độc lập. X có đúng 12 cột; không phát hiện trùng
+nhóm/phiên hay nguyên vector giữa các tập. Một cây quyết định sâu 3 tầng đã
+đạt 100% trên cả validation/test bằng h_ip, r_ip và l_markov. Generator v2 có
+quy luật cố định theo lớp: rho_ja4=1 ở Normal và .5 ở các lớp khác; m_cross=0
+ở hai lớp hợp lệ và >0 ở hai lớp có bot. ready:true cũ kiểm tra độ đầy đủ và
+nguồn gốc, chưa phát hiện các shortcut này. Có test-y để chấm điểm là đúng;
+chỉ truyền test-X vào predict, dùng test-y sau đó để tính metric.
+
+Generator `traffic-behavior.v3` giữ giới hạn lab, thay số client bằng 3–4 ở
+mọi lớp, dùng dải tốc độ có giao nhau, nhịp nghỉ/burst biến thiên ở cả hai vai
+trò, cho hai vai trò dùng chung các kiểu truy cập/static/query/đăng ký và
+UA override trên Node. Vai trò vẫn do người vận hành chỉ định trong manifest.
+Đợt batch đảo thứ tự kịch bản để giảm ảnh hưởng của vị trí khởi động/warmup.
+Mọi số feature tiếp tục được đo từ Gateway; không sửa CSV để hạ điểm model.
+Lệnh thu ngắn/dài phía dưới giữ nguyên. Thu mới được ghi phiên bản riêng;
+dữ liệu cũ vẫn giữ và có cảnh báo khi trộn nhiều phiên bản generator.
+
+Mỗi lần prepare-training tự ghi `dataset-diagnostics.json`: phân bố từng
+feature theo lớp, hằng số theo lớp, vector trùng và các phiên bản generator.
+Đọc cùng quality-report trước khi train. Qua cổng số lượng/coverage chưa đủ
+để kết luận tổng quát hóa tốt.
+
+Kiểm tra trực tiếp thư mục training đã xuất hoặc ZIP batch, không cần phát tải:
+
+```powershell
+python scripts/audit-training.py "C:\Downloads\batch.zip" ".local-backups/audit/new-report.json"
+```
+
+Đường dẫn ZIP phải là file thực trên máy, output phải là file mới. Script đọc
+X/y/groups/reference, kiểm tra schema và trùng dữ liệu, ghi min/median/max theo
+lớp. Nếu Python có numpy và scikit-learn, nó chạy thêm cây sâu 3 tầng, từng
+feature riêng và thử tráo nhãn train. Nếu thiếu, báo rõ baseline chưa chạy;
+có thể cài bằng `python -m pip install numpy scikit-learn`. Các thư viện Python
+này chỉ dùng audit tùy chọn, web/collector vẫn chạy bằng các công cụ bên dưới.
+Không dùng lại bộ test đã xem để tinh chỉnh generator rồi coi đó là test cuối;
+cần giữ một đợt thu độc lập với cấu hình/workload mới cho đánh giá cuối cùng.
+
 ## Thu dữ liệu và chuẩn bị train — collector v2
 
 CSV v2 đo lại theo định nghĩa trong `docs/FEATURE_SPEC.md`: GREASE tính theo
@@ -91,10 +131,9 @@ node scripts/generate-traffic.cjs Pure_L7_DDoS
 node scripts/generate-traffic.cjs Mixed_Traffic
 ```
 
-Mỗi lệnh mặc định chạy20giây, dùng Chrome headless đã cài. Client hợp lệ xem
-danh sách môn và định kỳ đăng ký fixture; client tấn công mô phỏng lặp request
-đọc. Normal dùng1client, Flash4client, DDoS4client, Mixed2hợp lệ+2tấn công.
-Thời gian nghỉ hợp lệ500–1500ms. Mỗi lượt có thư mục riêng dưới
+Mỗi lệnh mặc định chạy20giây, dùng Chrome headless và Node HTTP/2.
+Mỗi kịch bản có3–4client; Mixed có2hợp lệ và1–2tấn công. Mọi vai trò có nhịp
+nghỉ/burst và có thể truy cập API/static/query/đăng ký fixture. Mỗi lượt có thư mục riêng dưới
 `.local-backups/traffic/traffic-UUID/`, gồm `manifest.json`,
 `ground-truth.jsonl` và `dataset/windows.csv` cùng event nguồn để replay.
 
@@ -128,8 +167,8 @@ CSV dùng12feature hiện có. Nhãn biểu thị kịch bản do người vận
 ground truth cấp request lưu riêng. Thiếu request ID/không ghép được event thì
 dataset để trống nhãn và ghi incomplete. Markov fixture của Live không được
 chép vào CSV generator; l_markov chờ bảng tham chiếu train-only.
-Các lượt này là pilot local, IP phần lớn chungloopback và API chưa có biến thiên
-query/tài nguyên tĩnh. Dùng nhiều phiên độc lập và kiểm tra chất lượng trước khi
+Các lượt này là pilot local với IP nguồn loopback riêng và biến thiên query/static.
+Dùng nhiều phiên độc lập và kiểm tra chất lượng trước khi
 thu đại trà. Khi chia train/test, nhóm theo `split_group_id` (phiên Gateway gốc);
 để có nhóm độc lập, dừng rồi mở Live mới giữa các phiên thu. Loại cửa sổ partial
 khỏi tập train chính hoặc xử lý riêng theo đặc tả.
